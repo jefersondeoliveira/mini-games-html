@@ -2,8 +2,17 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Sorveteria Arco-Íris</title>
+<meta name="theme-color" content="#ff6fae">
+<meta name="description" content="Jogo da sorveteria: atenda no balcão, anote pedidos e monte sorvetes coloridos.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sorveteria">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -12,30 +21,33 @@
   --blue:#5cc8ff; --blue2:#d3efff; --purple:#a879ff; --purple2:#e8dcff; --orange:#ff9f43;
   --ink:#4a2c5e; --ink2:#7a5b8c; --paper:#fffaf0; --line:#ead7f0;
 }
-*{box-sizing:border-box}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%}
 body{
-  font-family:'Fredoka',system-ui,sans-serif;color:var(--ink);overflow:hidden;user-select:none;
-  background:#ffeaf5;
+  font-family:'Fredoka',system-ui,sans-serif;color:var(--ink);overflow:hidden;user-select:none;-webkit-user-select:none;
+  background:#ffeaf5;overscroll-behavior:none;
 }
-button{font-family:inherit;cursor:pointer;color:inherit}
+button{font-family:inherit;cursor:pointer;color:inherit;touch-action:manipulation}
 button:disabled{cursor:not-allowed;opacity:.45}
-#app{display:flex;flex-direction:column;height:100vh}
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh}
 
 /* ---------- HUD ---------- */
 .hud{
-  display:flex;align-items:center;gap:14px;padding:10px 18px;z-index:5;
+  display:flex;align-items:center;gap:12px;padding:10px 18px;padding-top:max(10px,env(safe-area-inset-top));z-index:5;
   background:linear-gradient(90deg,var(--pink),var(--orange),var(--yellow),var(--mint),var(--blue),var(--purple));
   color:#fff;box-shadow:0 4px 0 rgba(74,44,94,.15);
 }
 .logo{font-weight:700;font-size:22px;text-shadow:0 2px 0 rgba(0,0,0,.15);white-space:nowrap}
-.stats{display:flex;gap:10px;margin-left:auto;flex-wrap:wrap}
-.pill{background:rgba(255,255,255,.95);color:var(--ink);border-radius:999px;padding:6px 14px;font-weight:600;font-size:16px;box-shadow:0 3px 0 rgba(74,44,94,.15);white-space:nowrap}
-#switchBtn{
-  position:relative;border:none;border-radius:16px;padding:10px 18px;font-size:16px;font-weight:700;
+.stats{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
+.pill{background:rgba(255,255,255,.95);color:var(--ink);border-radius:999px;padding:6px 12px;font-weight:600;font-size:15px;box-shadow:0 3px 0 rgba(74,44,94,.15);white-space:nowrap}
+.pill.combo{background:#fff1d6;color:#e8590c;animation:pop .4s}
+.pill.hide{display:none}
+#switchBtn,#installBtn{
+  position:relative;border:none;border-radius:16px;padding:10px 16px;font-size:16px;font-weight:700;
   background:#fff;color:var(--ink);box-shadow:0 4px 0 var(--purple);transition:transform .1s;white-space:nowrap
 }
-#switchBtn:hover{transform:translateY(-2px)}
+#installBtn{display:none;box-shadow:0 4px 0 var(--mint)}
+#installBtn.show{display:block}
 #switchBtn:active{transform:translateY(2px);box-shadow:0 2px 0 var(--purple)}
 #switchBtn kbd{font-family:inherit;font-size:11px;background:var(--purple2);border-radius:6px;padding:1px 6px;margin-left:6px;color:var(--ink2)}
 .badge{position:absolute;top:-8px;right:-8px;background:#ff3d6e;color:#fff;border-radius:999px;min-width:24px;height:24px;font-size:13px;display:grid;place-items:center;padding:0 6px;border:2px solid #fff;animation:pop .4s}
@@ -51,10 +63,10 @@ button:disabled{cursor:not-allowed;opacity:.45}
 }
 
 /* ---------- Stage ---------- */
-#stage{flex:1;position:relative;overflow:hidden;margin-top:-20px}
-#views{display:flex;width:200%;height:100%;transition:transform .55s cubic-bezier(.7,-0.2,.3,1.2)}
+#stage{flex:1;position:relative;overflow:hidden;margin-top:-20px;min-height:0}
+#views{display:flex;width:200%;height:100%;transform:translateX(0);transition:transform .55s cubic-bezier(.7,-0.2,.3,1.2)}
 #views.kitchen{transform:translateX(-50%)}
-.view{width:50%;height:100%;display:flex;gap:16px;padding:30px 18px 16px;position:relative}
+.view{width:50%;height:100%;display:flex;gap:16px;padding:30px 18px 16px;position:relative;padding-bottom:max(16px,env(safe-area-inset-bottom))}
 
 /* Counter view */
 #counterView{
@@ -67,20 +79,22 @@ button:disabled{cursor:not-allowed;opacity:.45}
 .queue{flex:1;display:flex;align-items:flex-end;justify-content:center;gap:10px;padding:0 10px;min-height:250px}
 .empty-queue{align-self:center;font-size:20px;color:var(--ink2);text-align:center;opacity:.8}
 .cust{flex:1 1 0;min-width:0;max-width:210px;display:flex;flex-direction:column;align-items:center;cursor:pointer;position:relative;animation:walkIn .6s ease-out;transition:transform .2s}
-.cust:hover{transform:translateY(-4px)}
 .cust.sel .cust-body{outline:5px solid var(--yellow);outline-offset:3px}
 .cust.leaving{animation:walkOut 1.8s ease-in forwards;pointer-events:none}
+.cust.vip .cust-body{box-shadow:0 0 0 5px #ffd84d,0 0 18px 6px rgba(255,216,77,.8)}
+.vip-tag{position:absolute;top:-12px;right:-6px;font-size:26px;transform:rotate(18deg)}
+.body-wrap{position:relative}
 .bubble{
   background:#fff;border-radius:18px;padding:10px 12px;font-size:14px;line-height:1.35;margin-bottom:12px;width:100%;
   position:relative;box-shadow:0 4px 0 rgba(74,44,94,.12);border:3px solid var(--line);text-align:center;min-height:44px
 }
 .bubble::after{content:"";position:absolute;bottom:-12px;left:50%;transform:translateX(-50%);border:10px solid transparent;border-top-color:#fff;border-bottom:0}
 .bubble b{color:var(--pink)}
-.bubble .repeat{border:none;background:var(--yellow2);border-radius:10px;padding:5px 10px;font-weight:600;font-size:13px;margin-top:4px}
+.bubble .repeat{border:none;background:var(--yellow2);border-radius:10px;padding:6px 10px;font-weight:600;font-size:13px;margin-top:4px}
 .bubble .hint{display:block;font-size:11px;color:var(--ink2);margin-top:4px}
 .bubble.react{font-size:44px;padding:4px;width:auto;min-width:80px}
 .cust-body{width:92px;height:92px;border-radius:50%;display:grid;place-items:center;font-size:56px;box-shadow:inset 0 -8px 0 rgba(0,0,0,.08),0 5px 0 rgba(74,44,94,.15)}
-.cust-name{font-weight:600;margin-top:6px}
+.cust-name{font-weight:600;margin-top:6px;white-space:nowrap}
 .patience{width:100px;height:10px;border-radius:6px;background:#fff;margin-top:4px;overflow:hidden;border:2px solid var(--line)}
 .patience i{display:block;height:100%;background:var(--mint);border-radius:4px;transition:background .3s}
 .counter-top{
@@ -95,8 +109,6 @@ button:disabled{cursor:not-allowed;opacity:.45}
 .tray{display:flex;gap:10px;overflow-x:auto;min-height:104px;align-items:flex-end;padding-bottom:4px}
 .tray-empty{color:var(--ink2);font-size:14px;align-self:center}
 .tray-item{border:3px solid var(--line);background:#fff;border-radius:16px;padding:4px 8px;display:flex;flex-direction:column;align-items:center;font-weight:600;font-size:13px;flex:none;animation:pop .4s;box-shadow:0 3px 0 rgba(74,44,94,.12)}
-.tray-item:hover{border-color:var(--mint);transform:translateY(-2px)}
-
 .auto{background:#fff;border:2px dashed var(--mint);border-radius:12px;padding:6px 10px;font-size:13px;margin-bottom:8px}
 .auto .who{display:block}
 .abar{height:8px;background:var(--mint2);border-radius:5px;overflow:hidden;margin-top:4px}
@@ -109,6 +121,7 @@ button:disabled{cursor:not-allowed;opacity:.45}
   background-image:repeating-linear-gradient(180deg,transparent 0 31px,#e3eefc 31px 32px);
 }
 .notepad::before{content:"";position:absolute;top:-3px;left:50%;transform:translateX(-50%);width:110px;height:18px;background:var(--yellow);border-radius:0 0 10px 10px;opacity:.9}
+.np-close{display:none;position:absolute;top:10px;right:10px;border:none;background:var(--pink2);border-radius:10px;padding:6px 10px;font-weight:700}
 .np-empty{text-align:center;padding-top:40px;color:var(--ink2);font-size:17px}
 .np-empty .big-emoji{font-size:64px}
 .np-head{display:flex;align-items:center;gap:10px;margin:6px 0 10px}
@@ -117,10 +130,10 @@ button:disabled{cursor:not-allowed;opacity:.45}
 .np-sec{margin-bottom:10px}
 .np-sec>label{display:block;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink2);margin-bottom:4px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
-.chip{border:2px solid var(--line);background:#fff;border-radius:999px;padding:5px 11px;font-size:14px;font-weight:500}
+.chip{border:2px solid var(--line);background:#fff;border-radius:999px;padding:6px 11px;font-size:14px;font-weight:500}
 .chip.on{background:var(--purple);border-color:var(--purple);color:#fff}
-.dots{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
-.dot{width:28px;height:28px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px var(--line)}
+.dots{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.dot{width:30px;height:30px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px var(--line)}
 .dot.on{box-shadow:0 0 0 3px var(--ink);transform:scale(1.12)}
 .dot-name{font-size:13px;font-weight:600;margin-left:4px;min-width:64px}
 .np-foot{display:flex;align-items:center;gap:12px;margin-top:10px;position:sticky;bottom:-16px;background:var(--paper);padding:6px 0 10px}
@@ -129,6 +142,7 @@ button:disabled{cursor:not-allowed;opacity:.45}
 .big.pink{background:var(--pink);box-shadow:0 4px 0 #e0609a}
 .big.gray{background:#b9a8c6;box-shadow:0 4px 0 #9583a3}
 .big.yellow{background:var(--yellow);color:var(--ink);box-shadow:0 4px 0 #e8b923}
+.big.white{background:#fff;color:var(--ink);box-shadow:0 4px 0 var(--line);border:2px solid var(--line)}
 
 /* Kitchen view */
 #kitchenView{
@@ -163,31 +177,66 @@ button:disabled{cursor:not-allowed;opacity:.45}
 .stations>label{font-weight:700;font-size:13px;text-transform:uppercase;color:var(--ink2);letter-spacing:.5px}
 .row{display:flex;gap:8px;flex-wrap:wrap}
 .tub{border:none;background:none;padding:0;display:flex;flex-direction:column;align-items:center;font-size:12px;font-weight:600;width:66px;transition:transform .12s}
-.tub:hover{transform:translateY(-3px) rotate(-3deg)}
-.tub:active{transform:scale(.92)}
+.tub:active{transform:scale(.9)}
 .tub .tub-top{width:56px;height:30px;border-radius:50% 50% 8px 8px / 70% 70% 8px 8px;border:3px solid rgba(0,0,0,.12)}
 .tub .tub-box{width:58px;height:18px;border-radius:0 0 10px 10px;background:repeating-linear-gradient(90deg,#fff 0 8px,var(--pink2) 8px 16px);border:3px solid rgba(0,0,0,.1);border-top:none}
-.bottle{border:2px solid var(--line);background:#fff;border-radius:12px;padding:5px 9px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
+.bottle{border:2px solid var(--line);background:#fff;border-radius:12px;padding:6px 9px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
 .bottle i{width:14px;height:22px;border-radius:5px 5px 4px 4px;display:inline-block;border:2px solid rgba(0,0,0,.15)}
 .bottle.on{border-color:var(--purple);background:var(--purple2)}
 
-/* Overlay */
+@media (hover:hover){
+  #switchBtn:hover,#installBtn:hover{transform:translateY(-2px)}
+  .cust:hover{transform:translateY(-4px)}
+  .tray-item:hover{border-color:var(--mint);transform:translateY(-2px)}
+  .tub:hover{transform:translateY(-3px) rotate(-3deg)}
+}
+
+/* ---------- Avaliações ---------- */
+#reviews{position:fixed;top:80px;right:16px;width:330px;display:flex;flex-direction:column;gap:10px;z-index:26;pointer-events:none}
+.review{pointer-events:auto;background:#fff;border-radius:18px;border:4px solid var(--line);padding:10px 12px;box-shadow:0 6px 0 rgba(74,44,94,.2);font-size:13px;cursor:pointer;animation:slideIn .35s;transition:opacity .4s,transform .4s}
+.review.good{border-color:var(--mint)} .review.mid{border-color:var(--yellow)} .review.bad{border-color:#ff7a9c}
+.review.out{opacity:0;transform:translateX(30px)}
+.rv-head{display:flex;gap:8px;align-items:center}
+.rv-face{font-size:28px;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;flex:none}
+.rv-title{flex:1;line-height:1.25}
+.rv-title small{display:block;color:var(--ink2)}
+.rv-pay{font-weight:700;font-size:18px;white-space:nowrap}
+.review ul{list-style:none;margin:6px 0;padding:0}
+.review li{padding:3px 0;border-bottom:1px dashed var(--line)}
+.review li.ok{color:#1f9e70} .review li.no{color:#d23a64}
+.review li small{display:block;color:var(--ink2);font-weight:600}
+.rv-foot{font-size:12px;color:var(--ink2)}
+
+/* ---------- Overlay / telas ---------- */
 #overlay{position:fixed;inset:0;background:rgba(74,44,94,.55);display:grid;place-items:center;z-index:20;padding:16px}
 #overlay.hidden{display:none}
-.card{background:#fff;border-radius:26px;padding:26px 30px;max-width:640px;width:100%;max-height:92vh;overflow-y:auto;text-align:center;box-shadow:0 10px 0 var(--purple);border:4px solid var(--purple2);animation:pop .4s}
-.card h1{margin:0;font-size:38px;background:linear-gradient(90deg,var(--pink),var(--orange),var(--mint),var(--blue),var(--purple));-webkit-background-clip:text;background-clip:text;color:transparent}
+.card{background:#fff;border-radius:26px;padding:26px 30px;max-width:640px;width:100%;max-height:92vh;max-height:92dvh;overflow-y:auto;text-align:center;box-shadow:0 10px 0 var(--purple);border:4px solid var(--purple2);animation:pop .4s}
+.card.wide{max-width:860px}
+.card h1{margin:0;font-size:36px;background:linear-gradient(90deg,var(--pink),var(--orange),var(--mint),var(--blue),var(--purple));-webkit-background-clip:text;background-clip:text;color:transparent}
 .card p{color:var(--ink2);line-height:1.45}
 .how{text-align:left;background:var(--paper);border-radius:16px;padding:12px 18px 12px 34px;margin:14px 0;font-size:15px;line-height:1.5}
 .how li{margin:3px 0}
 .pick{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin:12px 0 18px}
 .pick h3{margin:0 0 6px;font-size:16px}
 .pick .opts{display:flex;gap:6px}
-.pick button{font-size:30px;width:52px;height:52px;border-radius:14px;border:3px solid var(--line);background:#fff}
+.pick button{font-size:28px;width:50px;height:50px;border-radius:14px;border:3px solid var(--line);background:#fff}
 .pick button.on{border-color:var(--pink);background:var(--pink2)}
-.result-big{font-size:56px;margin:8px 0}
-.res-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
+.btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.result-big{font-size:52px;margin:8px 0}
+.res-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin:14px 0}
 .res-grid div{background:var(--paper);border-radius:14px;padding:10px;font-weight:600}
-.res-grid b{display:block;font-size:26px;color:var(--pink)}
+.res-grid b{display:block;font-size:24px;color:var(--pink)}
+.wallet{font-size:22px;font-weight:700;margin:6px 0}
+.shop-sec{text-align:left;margin:16px 0}
+.shop-sec h3{margin:0 0 8px}
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.si{background:var(--paper);border:3px solid var(--line);border-radius:14px;padding:8px 10px;display:flex;flex-direction:column;gap:4px;font-size:13px}
+.si b{font-size:15px}
+.si .lv{color:var(--pink);letter-spacing:2px}
+.si button{border:none;border-radius:10px;padding:8px;background:var(--mint);color:#fff;font-weight:700;margin-top:auto}
+.si button:disabled{background:#cbbcd6;opacity:1}
+.si.done{opacity:.6}
+.swatch{display:inline-block;width:18px;height:18px;border-radius:50%;vertical-align:-3px;border:2px solid rgba(0,0,0,.15);margin-right:4px}
 
 /* Toasts */
 #toasts{position:fixed;top:80px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;z-index:30;pointer-events:none;align-items:center}
@@ -198,14 +247,66 @@ button:disabled{cursor:not-allowed;opacity:.45}
 @keyframes walkIn{from{transform:translateX(120px);opacity:0}to{transform:none;opacity:1}}
 @keyframes walkOut{0%,45%{transform:none;opacity:1}100%{transform:translateX(-160px);opacity:0}}
 @keyframes toast{0%{transform:translateY(-14px);opacity:0}10%,80%{transform:none;opacity:1}100%{transform:translateY(-10px);opacity:0}}
+@keyframes slideIn{from{transform:translateX(40px);opacity:0}to{transform:none;opacity:1}}
 
-@media (max-width:900px){
+/* ---------- Tablet ---------- */
+@media (max-width:1000px){
   .logo{font-size:17px}
-  .view{flex-direction:column;overflow-y:auto}
-  .notepad,.rail,.ticket-detail{width:auto}
-  .build-area{flex-direction:column}
-  .build-stage{min-height:260px}
-  .bubble{font-size:12px}
+  .notepad{width:300px}
+  .rail{width:200px}
+  .ticket-detail{width:220px}
+}
+/* ---------- Celular ---------- */
+@media (max-width:720px){
+  .hud{padding:6px 8px;padding-top:max(6px,env(safe-area-inset-top));gap:6px;flex-wrap:wrap}
+  .logo{display:none}
+  .stats{margin-left:0;gap:4px;flex:1 1 100%;justify-content:center;order:2}
+  .pill{font-size:12px;padding:4px 8px}
+  #switchBtn{font-size:14px;padding:8px 10px;flex:1;order:1}
+  #installBtn{font-size:14px;padding:8px 10px;order:1}
+  #switchBtn kbd{display:none}
+  .awning{height:22px}
+  #stage{margin-top:-12px}
+  .view{flex-direction:column;padding:16px 8px 10px;padding-bottom:max(10px,env(safe-area-inset-bottom));gap:8px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .shop{flex:none}
+  .shop-title{font-size:12px}
+  .queue{justify-content:flex-start;overflow-x:auto;min-height:250px;flex:none;padding:4px 4px 10px;gap:8px;scroll-snap-type:x mandatory}
+  .cust{flex:0 0 150px;max-width:none;scroll-snap-align:start}
+  .bubble{font-size:12.5px;padding:8px}
+  .cust-body{width:66px;height:66px;font-size:40px}
+  .counter-top{min-height:0;padding:10px;gap:8px}
+  .me{font-size:40px}
+  .tray{min-height:84px}
+  .notepad{position:fixed;left:0;right:50%;bottom:0;width:auto;max-height:80%;border-radius:22px 22px 0 0;z-index:15;
+    transform:translateY(110%);transition:transform .3s ease;padding:16px 14px;padding-bottom:max(16px,env(safe-area-inset-bottom));box-shadow:0 -6px 30px rgba(74,44,94,.35)}
+  .notepad.open{transform:none}
+  .notepad .np-empty{display:none}
+  .np-close{display:block}
+  .np-foot{bottom:-16px}
+  .rail{width:auto;flex:none;padding:8px}
+  .rail h3{font-size:15px;margin:4px 0 6px}
+  #tickets{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+  .ticket{flex:0 0 200px;margin:0}
+  .rail-empty{padding:6px}
+  .workbench{flex:none;gap:8px}
+  .build-area{flex:none;flex-direction:row;gap:8px}
+  .build-stage{min-height:240px;flex:1}
+  .build-stage svg{width:120px;height:auto}
+  .build-stage .chef{font-size:34px;left:6px}
+  .ticket-detail{width:46%;font-size:12px;padding:8px}
+  .ticket-detail h4{font-size:13px}
+  .actions{gap:6px}
+  .actions .big{font-size:13px;padding:10px 8px;flex:1}
+  .stations{grid-template-columns:1fr;gap:4px;padding:8px}
+  .tub{width:60px}
+  #reviews{left:8px;right:8px;width:auto;top:auto;bottom:max(8px,env(safe-area-inset-bottom))}
+  .review{font-size:12px;padding:8px 10px}
+  #toasts{top:calc(env(safe-area-inset-top) + 96px);width:92vw;gap:4px}
+  .toast{font-size:13px;padding:6px 12px;border-width:2px}
+  .card{padding:18px 14px;border-radius:20px}
+  .card h1{font-size:26px}
+  .how{font-size:13px}
+  .shop-grid{grid-template-columns:1fr 1fr}
 }
 </style>
 </head>
@@ -214,10 +315,14 @@ button:disabled{cursor:not-allowed;opacity:.45}
   <header class="hud">
     <div class="logo">🍦 Sorveteria Arco-Íris</div>
     <div class="stats">
+      <span class="pill" id="day">📅 Dia 1</span>
       <span class="pill" id="coins">💰 0</span>
+      <span class="pill" id="goal">🎯 0/80</span>
+      <span class="pill combo hide" id="combo">🔥 x1.0</span>
       <span class="pill" id="hearts">❤️❤️❤️❤️❤️</span>
       <span class="pill" id="clock">⏰ 10:00</span>
     </div>
+    <button id="installBtn">📲 Instalar</button>
     <button id="switchBtn"><span id="switchTxt">🔄 Trocar</span><kbd>Tab</kbd><span class="badge" id="switchBadge"></span></button>
   </header>
   <div class="awning"></div>
@@ -232,7 +337,7 @@ button:disabled{cursor:not-allowed;opacity:.45}
             <div class="me" id="meA"></div>
             <div class="tray-wrap">
               <div class="auto" id="autoChef"><b class="who"></b> <span></span><div class="abar"><i></i></div></div>
-              <div class="tray-label">🛎️ Sorvetes prontos — clique para entregar ao cliente</div>
+              <div class="tray-label">🛎️ Sorvetes prontos — toque para entregar</div>
               <div class="tray" id="tray"></div>
             </div>
           </div>
@@ -248,9 +353,9 @@ button:disabled{cursor:not-allowed;opacity:.45}
             <div class="ticket-detail" id="ticketDetail"></div>
           </div>
           <div class="actions">
-            <button class="big yellow" data-act="undo">↩️ Tirar última bola</button>
+            <button class="big yellow" data-act="undo">↩️ Tirar bola</button>
             <button class="big gray" data-act="trash">🗑️ Jogar fora</button>
-            <button class="big" data-act="done" id="doneBtn">✅ Pronto! Mandar pro balcão</button>
+            <button class="big" data-act="done" id="doneBtn">✅ Pronto!</button>
           </div>
           <div class="stations" id="stations"></div>
         </div>
@@ -259,56 +364,96 @@ button:disabled{cursor:not-allowed;opacity:.45}
   </main>
 </div>
 <div id="overlay"></div>
+<div id="reviews"></div>
 <div id="toasts"></div>
 
 <script>
 /* ================= DADOS ================= */
 const FLAVORS=[
-  {id:'morango',name:'Morango',color:'#ff9cc8',dark:'#e0609a'},
-  {id:'chocolate',name:'Chocolate',color:'#8a5a3c',dark:'#5e3a24'},
-  {id:'baunilha',name:'Baunilha',color:'#fff1bd',dark:'#e2cb7c'},
-  {id:'menta',name:'Menta',color:'#a3f2d4',dark:'#4fc99c'},
-  {id:'uva',name:'Uva',color:'#c7a1ff',dark:'#8f5fe0'},
+  {id:'morango',name:'Morango',color:'#ff9cc8',dark:'#e0609a',start:1},
+  {id:'chocolate',name:'Chocolate',color:'#8a5a3c',dark:'#5e3a24',start:1},
+  {id:'baunilha',name:'Baunilha',color:'#fff1bd',dark:'#e2cb7c',start:1},
+  {id:'menta',name:'Menta',color:'#a3f2d4',dark:'#4fc99c',start:1},
+  {id:'uva',name:'Uva',color:'#c7a1ff',dark:'#8f5fe0',start:1},
   {id:'limao',name:'Limão',color:'#e4f77e',dark:'#b2d03a'},
   {id:'chiclete',name:'Chiclete',color:'#86d6ff',dark:'#3fa4dd'},
   {id:'manga',name:'Manga',color:'#ffc369',dark:'#ec9826'},
+  {id:'pistache',name:'Pistache',color:'#c5e49a',dark:'#8db552'},
+  {id:'acai',name:'Açaí',color:'#7a3a85',dark:'#4f1f58'},
+  {id:'coco',name:'Coco',color:'#fbfaf5',dark:'#d6cfc0'},
 ];
 const FL=Object.fromEntries(FLAVORS.map(f=>[f.id,f]));
 const CONTAINERS=[
   {id:'casquinha',name:'Casquinha',icon:'🍦',speech:'uma casquinha'},
   {id:'copinho',name:'Copinho',icon:'🥤',speech:'um copinho'},
 ];
+const CT=Object.fromEntries(CONTAINERS.map(c=>[c.id,c]));
 const CALDAS=[
-  {id:'nenhuma',name:'Sem calda',color:'#ffffff',speech:'sem cobertura'},
-  {id:'chocolate',name:'Chocolate',color:'#5a3220',speech:'cobertura de chocolate'},
-  {id:'morango',name:'Morango',color:'#e8264f',speech:'cobertura de morango'},
+  {id:'nenhuma',name:'Sem calda',color:'#ffffff',speech:'sem cobertura',start:1},
+  {id:'chocolate',name:'Chocolate',color:'#5a3220',speech:'cobertura de chocolate',start:1},
+  {id:'morango',name:'Morango',color:'#e8264f',speech:'cobertura de morango',start:1},
   {id:'caramelo',name:'Caramelo',color:'#d98a1c',speech:'cobertura de caramelo'},
   {id:'leite',name:'Leite condensado',color:'#fffaf0',speech:'cobertura de leite condensado'},
 ];
 const CA=Object.fromEntries(CALDAS.map(c=>[c.id,c]));
 const EXTRAS=[
-  {id:'granulado',name:'Granulado',emoji:'🌈',speech:'granulado colorido'},
+  {id:'granulado',name:'Granulado',emoji:'🌈',speech:'granulado colorido',start:1},
+  {id:'chantilly',name:'Chantilly',emoji:'☁️',speech:'chantilly',start:1},
+  {id:'cereja',name:'Cereja',emoji:'🍒',speech:'uma cereja no topo',start:1},
   {id:'confete',name:'Confete',emoji:'🍬',speech:'confete'},
   {id:'castanha',name:'Castanhas',emoji:'🥜',speech:'castanhas'},
-  {id:'chantilly',name:'Chantilly',emoji:'☁️',speech:'chantilly'},
-  {id:'cereja',name:'Cereja',emoji:'🍒',speech:'uma cereja no topo'},
+  {id:'marshmallow',name:'Marshmallow',emoji:'🍡',speech:'marshmallow'},
+  {id:'biscoito',name:'Biscoito',emoji:'🍪',speech:'um biscoito espetado'},
 ];
 const EX=Object.fromEntries(EXTRAS.map(e=>[e.id,e]));
+const UPGRADES=[
+  {id:'paciencia',name:'Sofazinho colorido',emoji:'🛋️',desc:'Clientes esperam 20% mais por nível',max:3,cost:l=>60+l*60},
+  {id:'ajudante',name:'Treinar o ajudante',emoji:'⚡',desc:'O posto automático fica 25% mais rápido',max:3,cost:l=>50+l*50},
+  {id:'gorjeta',name:'Música ambiente',emoji:'🎵',desc:'+2 de gorjeta nos pedidos perfeitos',max:3,cost:l=>40+l*40},
+  {id:'letreiro',name:'Letreiro neon',emoji:'🌟',desc:'Chegam mais clientes (mais dinheiro!)',max:2,cost:l=>80+l*80},
+];
+const PRICE={heart:30,flavor:40,calda:30,extra:35};
 const FACES=['🧒','👧','👦','👩','👨','👵','👴','🧑‍🦰','👩‍🦱','🧔','👱‍♀️','🧑‍🎤','👸','🤠','🧑‍🚀','🐼','🐸','🦊'];
 const NAMES=['Ana','Bia','Caio','Duda','Enzo','Gabi','Heitor','Íris','João','Lara','Miguel','Nina','Otto','Pietra','Rafa','Sofia','Theo','Valentina','Lucas','Malu'];
 const COLORS=['#ffd1e6','#c9f7e7','#fff3b8','#d3efff','#e8dcff','#ffe0c2'];
 const AVATARS={atendente:['💁‍♀️','💁‍♂️','🙋‍♀️','🧑‍🦱','👧'],sorveteiro:['👨‍🍳','👩‍🍳','🧑‍🍳','🐻','🦄']};
 const ROLE_NAME={atendente:'Atendente',sorveteiro:'Sorveteiro(a)'};
+const PART_LABEL={container:'Recipiente',scoops:'Sabores',calda:'Calda',extras:'Extras'};
+const PARTS=['container','scoops','calda','extras'];
 
-/* ================= ESTADO ================= */
+/* ================= PERFIL (salvo) + ESTADO DO DIA ================= */
+const SAVE_KEY='sorveteria-arco-iris-v2';
+function newProfile(){
+  return {day:1,coins:0,hearts:5,
+    flavors:FLAVORS.filter(f=>f.start).map(f=>f.id),
+    caldas:CALDAS.filter(c=>c.start).map(c=>c.id),
+    extras:EXTRAS.filter(e=>e.start).map(e=>e.id),
+    up:{paciencia:0,ajudante:0,gorjeta:0,letreiro:0},
+    avatars:{atendente:AVATARS.atendente[0],sorveteiro:AVATARS.sorveteiro[0]}};
+}
+function saveProfile(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(P))}catch(e){}}
+function loadProfile(){
+  try{const p=JSON.parse(localStorage.getItem(SAVE_KEY));
+    if(p&&p.day&&p.hearts>0){const b=newProfile();return {...b,...p,up:{...b.up,...p.up},avatars:{...b.avatars,...p.avatars}}}
+  }catch(e){}
+  return null;
+}
+function clearProfile(){try{localStorage.removeItem(SAVE_KEY)}catch(e){}}
+
+let P=loadProfile()||newProfile();
 let S;
-const avatars={atendente:AVATARS.atendente[0],sorveteiro:AVATARS.sorveteiro[0]};
-function newState(){
-  return {running:false,role:'atendente',time:0,dayLen:360,auto:{chef:null,att:null},coins:0,hearts:5,served:0,perfect:0,lost:0,
+function newDay(){
+  return {running:false,role:'atendente',time:0,dayLen:360,auto:{chef:null,att:null},
+    earned:0,served:0,perfect:0,lost:0,combo:0,goal:80+(P.day-1)*40,
     customers:[],tickets:[],tray:[],nextId:1,nextTicket:1,spawnT:1.5,selCustomer:null,note:null,selTicket:null,
     build:emptyBuild(),closing:false};
 }
 function emptyBuild(){return {container:null,scoops:[],calda:'nenhuma',extras:[]}}
+const avail={
+  flavors:()=>FLAVORS.filter(f=>P.flavors.includes(f.id)),
+  caldas:()=>CALDAS.filter(c=>P.caldas.includes(c.id)),
+  extras:()=>EXTRAS.filter(e=>P.extras.includes(e.id)),
+};
 
 /* ================= UTIL ================= */
 const $=s=>document.querySelector(s);
@@ -318,11 +463,13 @@ const pick=a=>a[Math.floor(Math.random()*a.length)];
 const shuffle=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
 function joinPt(arr){if(arr.length<=1)return arr.join('');return arr.slice(0,-1).join(', ')+' e '+arr[arr.length-1]}
 const NUM=['zero','uma','duas','três','quatro'];
+const isMobile=()=>matchMedia('(max-width:720px)').matches;
 
 let AC;
 function beep(f=660,d=.09,type='sine',v=.06,delay=0){
   try{
     AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==='suspended')AC.resume();
     const t=AC.currentTime+delay,o=AC.createOscillator(),g=AC.createGain();
     o.type=type;o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(v,t);
     g.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d+.02);
@@ -335,7 +482,9 @@ const sfx={
   good(){[660,880,1100,1320].forEach((f,i)=>beep(f,.15,'triangle',.06,i*.08))},
   bad(){beep(300,.2,'sawtooth',.04);beep(220,.3,'sawtooth',.04,.15)},
   swoosh(){beep(400,.12,'sine',.04);beep(700,.12,'sine',.04,.06)},
+  coin(){beep(988,.08,'square',.04);beep(1319,.2,'square',.04,.08)},
 };
+function vibrate(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
 
 function toast(msg,kind='info'){
   const t=document.createElement('div');t.className='toast '+kind;t.innerHTML=msg;
@@ -380,6 +529,12 @@ function iceSVG(o,w=120,showEmpty=false){
     s+=`<path d="M${cx-26} ${cy+2} A26 26 0 0 1 ${cx+26} ${cy+2} L${cx+26} ${cy+8} Q${cx+22} ${cy+22} ${cx+18} ${cy+8} Q${cx+11} ${cy+3} ${cx+7} ${cy+6} L${cx+7} ${cy+16} Q${cx+3} ${cy+26} ${cx-1} ${cy+16} L${cx-1} ${cy+6} Q${cx-9} ${cy+2} ${cx-14} ${cy+7} Q${cx-19} ${cy+24} ${cx-23} ${cy+7} Z" fill="${c.color}" stroke="${st}" stroke-width="2"/>`;
     s+=`<ellipse cx="${cx-9}" cy="${cy-14}" rx="7" ry="3.5" fill="#fff" opacity=".35"/>`;
   }
+  if(ex.includes('biscoito')&&sc.length){
+    const bx=cx+8,by=topCy-12;
+    s+=`<g transform="rotate(28 ${bx} ${by})"><rect x="${bx-5}" y="${by-38}" width="11" height="40" rx="3" fill="#e3a55a" stroke="#b77a33" stroke-width="2"/>`;
+    for(let k=0;k<4;k++)s+=`<line x1="${bx-4}" y1="${by-32+k*9}" x2="${bx+5}" y2="${by-28+k*9}" stroke="#b77a33" stroke-width="1.5"/>`;
+    s+=`</g>`;
+  }
   if(ex.includes('granulado')){
     const offs=[[-14,-10,20],[6,-16,-30],[14,2,45],[-6,4,-60],[-18,6,10],[2,-4,80],[17,-9,-15],[-9,-19,35]];
     sc.forEach((_,i)=>offs.forEach(([dx,dy,a],j)=>{const x=cx+dx,y=cyOf(i)+dy;
@@ -392,6 +547,10 @@ function iceSVG(o,w=120,showEmpty=false){
   if(ex.includes('castanha')&&sc.length){
     [[-12,-16,10],[5,-21,-20],[15,-10,40],[-2,-11,70],[-18,-5,-30]].forEach(([dx,dy,a])=>{const x=cx+dx,y=topCy+dy;
       s+=`<path d="M${x-4} ${y} L${x} ${y-4} L${x+5} ${y-1} L${x+3} ${y+4} L${x-3} ${y+3} Z" fill="#c68b4e" stroke="#8d5a2b" stroke-width="1.2" transform="rotate(${a} ${x} ${y})"/>`});
+  }
+  if(ex.includes('marshmallow')&&sc.length){
+    [[-15,-12],[-3,-20],[11,-15],[16,-3],[-8,-4]].forEach(([dx,dy],k)=>{const x=cx+dx,y=topCy+dy;
+      s+=`<rect x="${x-5}" y="${y-4}" width="10" height="8" rx="3.5" fill="${k%2?'#fff':'#ffc4de'}" stroke="#e7a9c6" stroke-width="1.3" transform="rotate(${k*23-20} ${x} ${y})"/>`});
   }
   if(ex.includes('chantilly')){
     const ty=topY;
@@ -407,15 +566,17 @@ function iceSVG(o,w=120,showEmpty=false){
 }
 
 /* ================= PEDIDOS ================= */
-function difficulty(){return Math.min(1,S.time/S.dayLen)}
+function difficulty(){return Math.min(1,(P.day-1)*.2+S.time/S.dayLen*.45)}
 function genOrder(){
   const d=difficulty();
   const maxSc=Math.min(4,2+Math.floor(d*2.5));
   const n=ri(1,maxSc);
-  const scoops=[];for(let i=0;i<n;i++)scoops.push(pick(FLAVORS).id);
-  const calda=Math.random()<.25?'nenhuma':pick(CALDAS.slice(1)).id;
+  const fls=avail.flavors();
+  const scoops=[];for(let i=0;i<n;i++)scoops.push(pick(fls).id);
+  const cs=avail.caldas().filter(c=>c.id!=='nenhuma');
+  const calda=Math.random()<.25?'nenhuma':pick(cs).id;
   const maxEx=Math.min(3,Math.floor(d*3)+1);
-  const extras=shuffle(EXTRAS.map(e=>e.id)).slice(0,ri(0,maxEx));
+  const extras=shuffle(avail.extras().map(e=>e.id)).slice(0,ri(0,maxEx));
   return {container:pick(CONTAINERS).id,scoops,calda,extras};
 }
 function describeScoops(sc){
@@ -424,24 +585,38 @@ function describeScoops(sc){
   if(sc.length===1)return `<b>uma bola de ${FL[sc[0]].name.toLowerCase()}</b>`;
   return `<b>${sc.length} bolas</b>: ${joinPt(parts)}`;
 }
-function speech(o){
-  const hi=pick(['Oi!','Olá!','Oiê!','Boa tarde!','E aí!','Oi, tudo bem?']);
+function speech(o,vip){
+  const hi=vip?pick(['Com licença!','Saudações!']):pick(['Oi!','Olá!','Oiê!','Boa tarde!','E aí!','Oi, tudo bem?']);
   const want=pick(['Eu quero','Me vê','Pode me fazer','Eu queria']);
-  const cont=CONTAINERS.find(c=>c.id===o.container).speech;
-  let t=`${hi} ${want} <b>${cont}</b> com ${describeScoops(o.scoops)}, `;
+  let t=`${hi} ${want} <b>${CT[o.container].speech}</b> com ${describeScoops(o.scoops)}, `;
   t+= o.calda==='nenhuma'?`<b>sem cobertura</b>`:`com <b>${CA[o.calda].speech}</b>`;
   if(o.extras.length) t+=` e por cima ${joinPt(o.extras.map(e=>`<b>${EX[e].speech}</b>`))}`;
   else t+=`, sem mais nada`;
   return t+pick(['. Obrigado!','! Por favor!','. Valeu!','! 😋']);
 }
 function compare(made,want){
-  const ms=[...made.scoops].sort().join(),ws=[...want.scoops].sort().join();
   return {
     container:made.container===want.container,
-    scoops:ms===ws,
+    scoops:[...made.scoops].sort().join()===[...want.scoops].sort().join(),
     calda:made.calda===want.calda,
     extras:[...made.extras].sort().join()===[...want.extras].sort().join(),
   };
+}
+function partText(o,k){
+  if(k==='container')return CT[o.container]?.name||'nada';
+  if(k==='scoops')return o.scoops.length?`${o.scoops.length} bola${o.scoops.length>1?'s':''} (${[...o.scoops].sort().map(f=>FL[f].name).join(', ')})`:'nenhuma bola';
+  if(k==='calda')return CA[o.calda].name;
+  return o.extras.length?[...o.extras].sort().map(e=>EX[e].emoji+' '+EX[e].name).join(', '):'nenhum';
+}
+const basePay=o=>4+2*o.scoops.length+o.extras.length+(o.calda!=='nenhuma'?1:0);
+
+/* ================= AVALIAÇÃO (aparece nos dois postos) ================= */
+function showReview(html,mood){
+  const box=$('#reviews');const d=document.createElement('div');
+  d.className='review '+mood;d.innerHTML=html;d.title='Toque para fechar';
+  d.onclick=()=>d.remove();
+  box.prepend(d);while(box.children.length>(isMobile()?1:2))box.lastChild.remove();
+  setTimeout(()=>{d.classList.add('out');setTimeout(()=>d.remove(),400)},isMobile()?6000:8000);
 }
 
 /* ================= CLIENTES ================= */
@@ -451,10 +626,11 @@ function spawnCustomer(){
   const used=S.customers.map(c=>c.face);
   const face=pick(FACES.filter(f=>!used.includes(f)));
   const order=genOrder();
-  const c={id:S.nextId++,face,name:pick(NAMES),color:pick(COLORS),order,text:speech(order),
-    patience:1,maxTime:110-difficulty()*25,status:'new',bubbleT:20,ticket:null,reaction:null,leaveT:0};
+  const vip=P.day>=2&&Math.random()<.15;
+  const c={id:S.nextId++,face,name:pick(NAMES),color:pick(COLORS),order,vip,text:speech(order,vip),
+    patience:1,maxTime:(110-difficulty()*25)*(1+.2*P.up.paciencia)*(vip?.75:1),status:'new',bubbleT:20,ticket:null,reaction:null,leaveT:0};
   S.customers.push(c);qDirty=true;sfx.ding();
-  if(S.role==='sorveteiro')toast(`🔔 ${c.face} ${c.name} chegou no balcão!`,'info');
+  if(S.role==='sorveteiro'&&vip)toast(`👑 Um cliente VIP chegou! Paga em dobro!`,'info');
   updateSwitch();
 }
 function getC(id){return S.customers.find(c=>c.id===id)}
@@ -464,12 +640,18 @@ function customerLeave(c,reaction){
   qDirty=true;
 }
 function customerGivesUp(c){
+  const inKitchen=S.tickets.find(t=>t.customerId===c.id);
+  const inTray=S.tray.find(t=>t.customerId===c.id);
   customerLeave(c,'😤');
-  S.hearts--;S.lost++;sfx.bad();
-  toast(`😤 ${c.name} cansou de esperar e foi embora! (−1 ❤️)`,'bad');
+  P.hearts--;S.lost++;S.combo=0;sfx.bad();vibrate([80,60,80]);
+  const why=inTray?'🛎️ O sorvete estava pronto no balcão, mas ninguém entregou!'
+    :inKitchen?`🍨 A comanda #${inKitchen.id} ainda estava na cozinha.`:'⏳ Demorou demais.';
+  showReview(`<div class="rv-head"><span class="rv-face" style="background:${c.color}">${c.face}</span>
+    <div class="rv-title"><b>${c.name} foi embora 😤</b><small>Cansou de esperar o pedido #${c.ticket??'-'}</small></div><div class="rv-pay">−1 ❤️</div></div>
+    <ul><li class="no">✘ ${why}</li></ul>`,'bad');
   S.tickets=S.tickets.filter(t=>t.customerId!==c.id);
   S.tray=S.tray.filter(t=>t.customerId!==c.id);
-  if(S.selTicket&&!S.tickets.find(t=>t.id===S.selTicket))S.selTicket=null;
+  if(S.selTicket&&!S.tickets.find(t=>t.id===S.selTicket))S.selTicket=S.tickets[0]?.id??null;
   renderKitchen();renderTray();renderHUD();updateSwitch();
 }
 
@@ -484,12 +666,12 @@ function renderQueue(){
     let b;
     if(c.status==='leaving')b=`<div class="bubble react">${c.reaction}</div>`;
     else if(c.status==='ordered')b=`<div class="bubble">⏳ Esperando meu sorvete...<span class="hint">Comanda #${c.ticket}</span></div>`;
-    else if(c.bubbleT>0)b=`<div class="bubble">${c.text}${S.selCustomer!==c.id?'<span class="hint">👆 clique para anotar</span>':''}</div>`;
+    else if(c.bubbleT>0)b=`<div class="bubble">${c.text}${S.selCustomer!==c.id?'<span class="hint">👆 toque para anotar</span>':''}</div>`;
     else b=`<div class="bubble">🤔 ...<br><button class="repeat" data-act="repeat" data-cid="${c.id}">Pode repetir?</button><span class="hint">(deixa o cliente impaciente)</span></div>`;
-    return `<div class="cust ${c.status} ${S.selCustomer===c.id?'sel':''}" data-cid="${c.id}">
+    return `<div class="cust ${c.status} ${S.selCustomer===c.id?'sel':''} ${c.vip?'vip':''}" data-cid="${c.id}">
       ${b}
-      <div class="cust-body" style="background:${c.color}">${c.face}</div>
-      <div class="cust-name">${c.name}</div>
+      <div class="body-wrap"><div class="cust-body" style="background:${c.color}">${c.face}</div>${c.vip?'<span class="vip-tag">👑</span>':''}</div>
+      <div class="cust-name">${c.vip?'VIP ':''}${c.name}</div>
       <div class="patience"><i data-bar="${c.id}" style="width:${c.patience*100}%"></i></div>
     </div>`;
   }).join('');
@@ -517,24 +699,30 @@ $('#queue').addEventListener('click',e=>{
 function chip(act,v,label,on){return `<button class="chip ${on?'on':''}" data-act="${act}" data-v="${v}">${label}</button>`}
 function renderNote(){
   const np=$('#notepad');
-  const c=getC(S.selCustomer);
+  const c=S.selCustomer&&getC(S.selCustomer);
   if(!c||c.status!=='new'){
-    np.innerHTML=`<div class="np-empty"><div class="big-emoji">📝</div><p><b>Bloquinho de pedidos</b></p><p>Clique em um cliente para anotar o que ele quer.<br><br>Depois mande a comanda pra cozinha e troque para o <b>sorveteiro</b> (ou volte ao balcão para entregar!).</p></div>`;
+    np.classList.remove('open');
+    np.innerHTML=`<div class="np-empty"><div class="big-emoji">📝</div><p><b>Bloquinho de pedidos</b></p><p>Toque em um cliente para anotar o que ele quer.<br><br>Enquanto você atende, o sorveteiro prepara os sorvetes sozinho!</p></div>`;
     return;
   }
+  np.classList.add('open');
   const n=S.note;
   const ok=n.container&&n.scoops.length&&n.scoops.every(Boolean)&&n.calda;
   np.innerHTML=`
-    <div class="np-head"><span class="face" style="background:${c.color}">${c.face}</span><div><b>Pedido de ${c.name}</b><small>Comanda #${S.nextTicket}</small></div></div>
+    <button class="np-close" data-act="close">✕ Fechar</button>
+    <div class="np-head"><span class="face" style="background:${c.color}">${c.face}</span><div><b>Pedido de ${c.vip?'👑 ':''}${c.name}</b><small>Comanda #${S.nextTicket}</small></div></div>
+    ${isMobile()?`<div class="bubble" style="margin-bottom:10px">${c.text}</div>`:''}
     <div class="np-sec"><label>Recipiente</label><div class="chips">${CONTAINERS.map(x=>chip('container',x.id,x.icon+' '+x.name,n.container===x.id)).join('')}</div></div>
     <div class="np-sec"><label>Quantas bolas?</label><div class="chips">${[1,2,3,4].map(k=>chip('count',k,k+(k>1?' bolas':' bola'),n.scoops.length===k)).join('')}</div></div>
-    ${n.scoops.map((f,i)=>`<div class="np-sec"><label>Sabor da bola ${i+1}</label><div class="dots">${FLAVORS.map(fl=>`<button class="dot ${f===fl.id?'on':''}" data-act="flavor" data-i="${i}" data-v="${fl.id}" style="background:${fl.color}" title="${fl.name}"></button>`).join('')}<span class="dot-name">${f?FL[f].name:'—'}</span></div></div>`).join('')}
-    <div class="np-sec"><label>Cobertura</label><div class="chips">${CALDAS.map(x=>chip('calda',x.id,x.name,n.calda===x.id)).join('')}</div></div>
-    <div class="np-sec"><label>Extras (pode marcar vários)</label><div class="chips">${EXTRAS.map(x=>chip('extra',x.id,x.emoji+' '+x.name,n.extras.includes(x.id))).join('')}</div></div>
-    <div class="np-foot"><div>${iceSVG({...n,calda:n.calda||'nenhuma'},62,true)}</div><button class="big pink" data-act="send" ${ok?'':'disabled'}>📨 Enviar pra cozinha</button></div>`;
+    ${n.scoops.map((f,i)=>`<div class="np-sec"><label>Sabor da bola ${i+1}</label><div class="dots">${avail.flavors().map(fl=>`<button class="dot ${f===fl.id?'on':''}" data-act="flavor" data-i="${i}" data-v="${fl.id}" style="background:${fl.color}" title="${fl.name}"></button>`).join('')}<span class="dot-name">${f?FL[f].name:'—'}</span></div></div>`).join('')}
+    <div class="np-sec"><label>Cobertura</label><div class="chips">${avail.caldas().map(x=>chip('calda',x.id,x.name,n.calda===x.id)).join('')}</div></div>
+    <div class="np-sec"><label>Extras (pode marcar vários)</label><div class="chips">${avail.extras().map(x=>chip('extra',x.id,x.emoji+' '+x.name,n.extras.includes(x.id))).join('')}</div></div>
+    <div class="np-foot"><div>${iceSVG({...n,calda:n.calda||'nenhuma'},56,true)}</div><button class="big pink" data-act="send" ${ok?'':'disabled'}>📨 Enviar pra cozinha</button></div>`;
 }
 $('#notepad').addEventListener('click',e=>{
-  const b=e.target.closest('[data-act]');if(!b||!S.note)return;
+  const b=e.target.closest('[data-act]');if(!b)return;
+  if(b.dataset.act==='close'){S.selCustomer=null;S.note=null;qDirty=true;renderNote();return}
+  if(!S.note)return;
   const n=S.note,v=b.dataset.v;
   switch(b.dataset.act){
     case 'container':n.container=v;break;
@@ -544,7 +732,8 @@ $('#notepad').addEventListener('click',e=>{
     case 'extra':n.extras=n.extras.includes(v)?n.extras.filter(x=>x!==v):[...n.extras,v];break;
     case 'send':return sendTicket();
   }
-  sfx.click();renderNote();
+  sfx.click();
+  const sc=$('#notepad').scrollTop;renderNote();$('#notepad').scrollTop=sc;
 });
 function makeTicket(c,order,quiet=false){
   const t={id:S.nextTicket++,customerId:c.id,face:c.face,name:c.name,order:JSON.parse(JSON.stringify(order))};
@@ -560,8 +749,8 @@ function sendTicket(){
 }
 function renderTray(){
   const tr=$('#tray');
-  if(!S.tray.length){tr.innerHTML=`<div class="tray-empty">Nenhum sorvete pronto ainda. O sorveteiro manda pra cá! 👨‍🍳</div>`;return}
-  tr.innerHTML=S.tray.map(it=>`<button class="tray-item" data-tid="${it.id}" title="Entregar para ${it.name}">${iceSVG(it.ice,54)}<span>#${it.ticketId} → ${it.face}</span></button>`).join('');
+  if(!S.tray.length){tr.innerHTML=`<div class="tray-empty">Nenhum sorvete pronto ainda. A cozinha manda pra cá! 👨‍🍳</div>`;return}
+  tr.innerHTML=S.tray.map(it=>`<button class="tray-item" data-tid="${it.id}" title="Entregar para ${it.name}">${iceSVG(it.ice,50)}<span>#${it.ticketId} → ${it.face}</span></button>`).join('');
 }
 $('#tray').addEventListener('click',e=>{
   const b=e.target.closest('.tray-item');if(!b)return;
@@ -574,30 +763,46 @@ function deliver(it){
   if(!c||c.status==='leaving'){toast('Esse cliente já foi embora 😢','bad');renderTray();return}
   const r=compare(it.ice,c.order);
   const okCount=Object.values(r).filter(Boolean).length;
-  const base=4+2*c.order.scoops.length+c.order.extras.length;
-  const labels={container:'recipiente',scoops:'sabores/bolas',calda:'cobertura',extras:'extras'};
-  const wrong=Object.keys(r).filter(k=>!r[k]).map(k=>labels[k]);
-  let pay=0;
+  const base=basePay(c.order),vipM=c.vip?2:1;
+  let pay=0,tip=0,mult=1,stars,mood,reaction,title,foot;
   if(okCount===4){
-    const tip=Math.ceil(Math.max(0,c.patience)*6);pay=base+tip;S.perfect++;
-    customerLeave(c,pick(['😍','🤩','🥰','😋']));sfx.good();
-    toast(`🎉 Perfeito! ${c.name} amou! +💰${pay} <small>(gorjeta ${tip})</small>`,'good');
+    S.combo++;S.perfect++;
+    tip=Math.ceil(Math.max(0,c.patience)*6)+2*P.up.gorjeta;
+    mult=1+Math.min(S.combo-1,5)*.1;
+    pay=Math.round((base+tip)*mult*vipM);
+    stars=c.patience>.5?3:2;mood='good';reaction=pick(['😍','🤩','🥰','😋']);
+    title=stars===3?'Amou! Tudo certinho e rapidinho!':'Gostou! Tudo certo, mas demorou um pouco.';
+    foot=`Preço ${base} + gorjeta ${tip}${mult>1?` × combo ${mult.toFixed(1)}`:''}${c.vip?' × VIP 2':''}`;
+    sfx.good();sfx.coin();
   }else if(okCount===3){
-    pay=Math.ceil(base/2);customerLeave(c,'🙂');sfx.plop();
-    toast(`🙂 Quase! Errou: ${wrong.join(', ')}. +💰${pay}`,'info');
+    S.combo=0;pay=Math.ceil(base/2)*vipM;stars=1;mood='mid';reaction='🙂';
+    title='Ficou mais ou menos... faltou algo.';foot='Pagou só metade e não deu gorjeta. O combo foi zerado.';
+    sfx.plop();
   }else{
-    customerLeave(c,'😠');S.hearts--;sfx.bad();
-    toast(`😠 ${c.name} não gostou! Errou: ${wrong.join(', ')}. (−1 ❤️)`,'bad');
+    S.combo=0;stars=0;mood='bad';reaction='😠';P.hearts--;
+    title='Não gostou! Veio tudo errado.';foot='Não pagou e você perdeu 1 ❤️. O combo foi zerado.';
+    sfx.bad();vibrate([80,60,80]);
   }
-  S.coins+=pay;S.served++;
+  P.coins+=pay;S.earned+=pay;S.served++;
+  customerLeave(c,reaction);
+  const rows=PARTS.map(k=>{
+    if(r[k])return `<li class="ok">✔ <b>${PART_LABEL[k]}:</b> ${partText(it.ice,k)}</li>`;
+    const wrote=compare(it.ticketOrder,c.order)[k];
+    const who=wrote?'🍨 Erro de quem montou o sorvete (cozinha)':'📝 Erro de quem anotou o pedido (balcão)';
+    return `<li class="no">✘ <b>${PART_LABEL[k]}:</b> pediu ${partText(c.order,k)}, recebeu ${partText(it.ice,k)}<small>${who}</small></li>`;
+  }).join('');
+  showReview(`<div class="rv-head"><span class="rv-face" style="background:${c.color}">${c.face}</span>
+    <div class="rv-title"><b>${c.vip?'👑 ':''}${c.name} ${reaction}</b><small>${title}</small><small>Satisfação: ${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</small></div>
+    <div class="rv-pay">${pay?'+💰'+pay:mood==='bad'?'−1 ❤️':''}</div></div>
+    <ul>${rows}</ul><div class="rv-foot">${foot}</div>`,mood);
+  if(S.combo>=2&&mood==='good')toast(`🔥 Combo x${S.combo}! Continue acertando!`,'good');
   renderTray();renderHUD();updateSwitch();
 }
 
 /* ================= COZINHA ================= */
 function orderLines(o){
-  const ct=CONTAINERS.find(c=>c.id===o.container);
   return [
-    `${ct.icon} ${ct.name}`,
+    `${CT[o.container].icon} ${CT[o.container].name}`,
     `🍨 ${o.scoops.length} bola${o.scoops.length>1?'s':''}: ${o.scoops.map(f=>FL[f].name).join(', ')}`,
     `🍫 ${o.calda==='nenhuma'?'Sem calda':'Calda: '+CA[o.calda].name}`,
     `✨ ${o.extras.length?o.extras.map(e=>EX[e].emoji+' '+EX[e].name).join(', '):'Sem extras'}`,
@@ -608,25 +813,24 @@ function renderKitchen(){
   tk.innerHTML=S.tickets.length?S.tickets.map(t=>`<button class="ticket ${S.selTicket===t.id?'on':''}" data-tk="${t.id}">
     <div class="ticket-head"><span>#${t.id}</span><span>${t.face} ${t.name}</span></div>
     <ul>${orderLines(t.order).map(l=>`<li>${l}</li>`).join('')}</ul></button>`).join('')
-    :`<div class="rail-empty">Nenhuma comanda.<br>O atendente anota os pedidos no balcão 💁‍♀️</div>`;
-  $('#buildStage').innerHTML=`<div class="chef">${avatars.sorveteiro}<small>Você</small></div>${iceSVG(S.build,170,true)}`;
+    :`<div class="rail-empty">Nenhuma comanda. O balcão anota os pedidos 💁</div>`;
+  $('#buildStage').innerHTML=`<div class="chef">${P.avatars.sorveteiro}<small>Você</small></div>${iceSVG(S.build,170,true)}`;
   const t=S.tickets.find(t=>t.id===S.selTicket);
   const td=$('#ticketDetail');
-  if(!t){td.innerHTML=`<h4>👈 Escolha uma comanda</h4><p>Clique numa comanda à esquerda para ver o que fazer.</p><p>Monte o sorvete: <b>recipiente → bolas → calda → extras</b>, e aperte <b>Pronto!</b></p>`}
+  if(!t){td.innerHTML=`<h4>👈 Escolha uma comanda</h4><p>Monte o sorvete: <b>recipiente → bolas → calda → extras</b>, e aperte <b>Pronto!</b></p>`}
   else{
     const r=compare(S.build,t.order);
     const lines=orderLines(t.order);
-    const rows=[['container',lines[0]],['scoops',lines[1]],['calda',lines[2]],['extras',lines[3]]];
-    td.innerHTML=`<h4>Comanda #${t.id} — ${t.face} ${t.name}</h4>`+rows.map(([k,l])=>`<div class="check"><span class="${r[k]?'ok':'no'}">${r[k]?'✔':'○'}</span><span>${l}</span></div>`).join('');
+    td.innerHTML=`<h4>Comanda #${t.id} — ${t.face} ${t.name}</h4>`+PARTS.map((k,i)=>`<div class="check"><span class="${r[k]?'ok':'no'}">${r[k]?'✔':'○'}</span><span>${lines[i]}</span></div>`).join('');
   }
   $('#doneBtn').disabled=!(t&&S.build.container&&S.build.scoops.length);
 }
 function renderStations(){
   $('#stations').innerHTML=`
     <label>Recipiente</label><div class="row">${CONTAINERS.map(c=>`<button class="bottle ${S.build.container===c.id?'on':''}" data-act="k-container" data-v="${c.id}">${c.icon} ${c.name}</button>`).join('')}</div>
-    <label>Sabores</label><div class="row">${FLAVORS.map(f=>`<button class="tub" data-act="k-scoop" data-v="${f.id}"><div class="tub-top" style="background:${f.color}"></div><div class="tub-box"></div>${f.name}</button>`).join('')}</div>
-    <label>Calda</label><div class="row">${CALDAS.map(c=>`<button class="bottle ${S.build.calda===c.id?'on':''}" data-act="k-calda" data-v="${c.id}">${c.id==='nenhuma'?'🚫':`<i style="background:${c.color}"></i>`} ${c.name}</button>`).join('')}</div>
-    <label>Extras</label><div class="row">${EXTRAS.map(x=>`<button class="bottle ${S.build.extras.includes(x.id)?'on':''}" data-act="k-extra" data-v="${x.id}">${x.emoji} ${x.name}</button>`).join('')}</div>`;
+    <label>Sabores</label><div class="row">${avail.flavors().map(f=>`<button class="tub" data-act="k-scoop" data-v="${f.id}"><div class="tub-top" style="background:${f.color}"></div><div class="tub-box"></div>${f.name}</button>`).join('')}</div>
+    <label>Calda</label><div class="row">${avail.caldas().map(c=>`<button class="bottle ${S.build.calda===c.id?'on':''}" data-act="k-calda" data-v="${c.id}">${c.id==='nenhuma'?'🚫':`<i style="background:${c.color}"></i>`} ${c.name}</button>`).join('')}</div>
+    <label>Extras</label><div class="row">${avail.extras().map(x=>`<button class="bottle ${S.build.extras.includes(x.id)?'on':''}" data-act="k-extra" data-v="${x.id}">${x.emoji} ${x.name}</button>`).join('')}</div>`;
 }
 $('#tickets').addEventListener('click',e=>{
   const b=e.target.closest('[data-tk]');if(!b)return;
@@ -640,7 +844,7 @@ $('#kitchenView').addEventListener('click',e=>{
     case 'k-scoop':
       if(!B.container){toast('Escolha primeiro: casquinha ou copinho! 🍦','info');sfx.bad();return}
       if(B.scoops.length>=4){toast('No máximo 4 bolas! 😅','info');return}
-      B.scoops.push(v);sfx.plop();break;
+      B.scoops.push(v);sfx.plop();vibrate(15);break;
     case 'k-calda':B.calda=v;sfx.click();break;
     case 'k-extra':B.extras=B.extras.includes(v)?B.extras.filter(x=>x!==v):[...B.extras,v];sfx.click();break;
     case 'undo':B.scoops.pop();sfx.click();break;
@@ -652,14 +856,16 @@ $('#kitchenView').addEventListener('click',e=>{
 });
 function finishBuild(){
   const t=S.tickets.find(t=>t.id===S.selTicket);if(!t)return;
-  S.tray.push({id:S.nextId++,ticketId:t.id,customerId:t.customerId,face:t.face,name:t.name,ice:JSON.parse(JSON.stringify(S.build))});
+  S.tray.push({id:S.nextId++,ticketId:t.id,customerId:t.customerId,face:t.face,name:t.name,
+    ice:JSON.parse(JSON.stringify(S.build)),ticketOrder:t.order});
   S.tickets=S.tickets.filter(x=>x!==t);S.selTicket=S.tickets[0]?.id??null;S.build=emptyBuild();
-  sfx.good();toast(`🛎️ Sorvete #${t.id} foi pro balcão! Troque pro atendente para entregar.`,'good');
+  sfx.good();toast(`🛎️ Sorvete #${t.id} foi pro balcão!`,'good');
   renderStations();renderKitchen();renderTray();updateSwitch();
 }
 
 /* ================= AJUDANTE AUTOMÁTICO ================= */
 // Enquanto você está num posto, o outro trabalha sozinho (e sempre acerta).
+const helperSpeed=()=>1+.25*P.up.ajudante;
 function setAuto(sel,text,p){
   const el=$(sel);if(!el)return;
   el.querySelector('span').textContent=text;
@@ -671,13 +877,14 @@ function autoChef(dt){
   if(!j){
     const t=S.tickets[0];
     if(!t){setAuto('#autoChef','😴 Esperando comandas...',0);return}
-    j=S.auto.chef={ticketId:t.id,t:0,dur:5+t.order.scoops.length*1.5+t.order.extras.length*.8};
+    j=S.auto.chef={ticketId:t.id,t:0,dur:(5+t.order.scoops.length*1.5+t.order.extras.length*.8)/helperSpeed()};
   }
   j.t+=dt;
   setAuto('#autoChef',`Preparando a comanda #${j.ticketId}...`,j.t/j.dur);
   if(j.t>=j.dur){
     const t=S.tickets.find(x=>x.id===j.ticketId);S.auto.chef=null;
-    S.tray.push({id:S.nextId++,ticketId:t.id,customerId:t.customerId,face:t.face,name:t.name,ice:JSON.parse(JSON.stringify(t.order))});
+    S.tray.push({id:S.nextId++,ticketId:t.id,customerId:t.customerId,face:t.face,name:t.name,
+      ice:JSON.parse(JSON.stringify(t.order)),ticketOrder:t.order});
     S.tickets=S.tickets.filter(x=>x!==t);if(S.selTicket===t.id)S.selTicket=S.tickets[0]?.id??null;
     sfx.plop();renderKitchen();renderTray();updateSwitch();
   }
@@ -688,10 +895,10 @@ function autoAttendant(dt){
   if(j&&j.kind==='note'){const c=getC(j.custId);if(!c||c.status!=='new')j=S.auto.att=null}
   if(!j){
     const it=S.tray[0];
-    if(it)j=S.auto.att={kind:'deliver',itemId:it.id,t:0,dur:2.5,label:`Entregando o sorvete #${it.ticketId} para ${it.name}...`};
+    if(it)j=S.auto.att={kind:'deliver',itemId:it.id,t:0,dur:2.5/helperSpeed(),label:`Entregando o sorvete #${it.ticketId} para ${it.name}...`};
     else{
       const c=S.customers.find(c=>c.status==='new');
-      if(c)j=S.auto.att={kind:'note',custId:c.id,t:0,dur:5,label:`Anotando o pedido de ${c.face} ${c.name}...`};
+      if(c)j=S.auto.att={kind:'note',custId:c.id,t:0,dur:5/helperSpeed(),label:`Anotando o pedido de ${c.face} ${c.name}...`};
     }
     if(!j){setAuto('#autoAtt','😴 Esperando clientes...',0);return}
   }
@@ -709,15 +916,16 @@ function switchRole(){
   if(!S.running)return;
   S.auto={chef:null,att:null};
   S.role=S.role==='atendente'?'sorveteiro':'atendente';
+  if(S.role==='sorveteiro'){S.selCustomer=null;S.note=null;renderNote()}
   $('#views').classList.toggle('kitchen',S.role==='sorveteiro');
-  sfx.swoosh();
-  toast(`Agora você é o ${avatars[S.role]} <b>${ROLE_NAME[S.role]}</b>!`,'info');
+  sfx.swoosh();vibrate(20);
+  toast(`Agora você é o ${P.avatars[S.role]} <b>${ROLE_NAME[S.role]}</b>!`,'info');
   if(S.role==='sorveteiro'&&!S.selTicket&&S.tickets[0]){S.selTicket=S.tickets[0].id;renderKitchen()}
   updateSwitch();qDirty=true;
 }
 function updateSwitch(){
   const other=S.role==='atendente'?'sorveteiro':'atendente';
-  $('#switchTxt').textContent=`🔄 Virar ${ROLE_NAME[other]} ${avatars[other]}`;
+  $('#switchTxt').textContent=isMobile()?`🔄 Ir para ${other==='sorveteiro'?'a cozinha':'o balcão'} ${P.avatars[other]}`:`🔄 Virar ${ROLE_NAME[other]} ${P.avatars[other]}`;
   const n=S.role==='atendente'?S.tickets.length:(S.tray.length+S.customers.filter(c=>c.status==='new').length);
   $('#switchBadge').textContent=n||'';
 }
@@ -726,11 +934,15 @@ document.addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();swi
 
 /* ================= HUD / LOOP ================= */
 function renderHUD(){
-  $('#coins').textContent='💰 '+S.coins;
-  $('#hearts').textContent='❤️'.repeat(Math.max(0,S.hearts))+'🤍'.repeat(Math.max(0,5-S.hearts));
-  $('#meA').innerHTML=`${avatars.atendente}<small>Você</small>`;
-  $('#autoChef .who').textContent=`${avatars.sorveteiro} Na cozinha (automático):`;
-  $('#autoAtt .who').textContent=`${avatars.atendente} No balcão (automático):`;
+  $('#day').textContent='📅 Dia '+P.day;
+  $('#coins').textContent='💰 '+P.coins;
+  $('#goal').textContent=`🎯 ${S.earned}/${S.goal}${S.earned>=S.goal?' ✅':''}`;
+  const cb=$('#combo');
+  if(S.combo>=2){cb.classList.remove('hide');cb.textContent=`🔥 x${(1+Math.min(S.combo-1,5)*.1).toFixed(1)}`}else cb.classList.add('hide');
+  $('#hearts').textContent='❤️'.repeat(Math.max(0,P.hearts))+'🤍'.repeat(Math.max(0,5-P.hearts));
+  $('#meA').innerHTML=`${P.avatars.atendente}<small>Você</small>`;
+  $('#autoChef .who').textContent=`${P.avatars.sorveteiro} Na cozinha (automático):`;
+  $('#autoAtt .who').textContent=`${P.avatars.atendente} No balcão (automático):`;
 }
 function renderClock(){
   if(S.closing){$('#clock').textContent='🌙 Fechando!';return}
@@ -750,64 +962,157 @@ function update(dt){
     S.spawnT-=dt;
     if(S.spawnT<=0){
       if(activeCustomers().length<4)spawnCustomer();
-      S.spawnT=28-difficulty()*10+rand(-3,3);
+      S.spawnT=(28-difficulty()*10+rand(-3,3))*(1-.15*P.up.letreiro);
     }
   }
   for(const c of [...S.customers]){
     if(c.status==='leaving'){c.leaveT-=dt;if(c.leaveT<=0){S.customers=S.customers.filter(x=>x!==c);qDirty=true;updateSwitch()}continue}
     if(c.status==='ordered')c.patience-=dt/c.maxTime; // só conta depois de anotado
     if(c.status==='new'&&S.role==='atendente'&&c.bubbleT>0){c.bubbleT-=dt;if(c.bubbleT<=0)qDirty=true}
-    if(c.patience<=0)customerGivesUp(c);
+    if(c.patience<=0&&c.status!=='leaving')customerGivesUp(c);
   }
   if(S.running){if(S.role==='atendente')autoChef(dt);else autoAttendant(dt)}
   if(qDirty)renderQueue();else updateBars();
   renderClock();
-  if(S.hearts<=0)return endGame(false);
-  if(S.closing&&!S.customers.length)return endGame(true);
+  if(P.hearts<=0)return gameOver();
+  if(S.closing&&!S.customers.length)return endDay();
 }
 
 /* ================= TELAS ================= */
+function openOverlay(html){const ov=$('#overlay');ov.classList.remove('hidden');ov.innerHTML=html;ov.querySelector('.card').scrollTop=0}
 function startScreen(){
-  const ov=$('#overlay');ov.classList.remove('hidden');
-  const pickRow=role=>`<div><h3>${role==='atendente'?'💁 Atendente':'🍨 Sorveteiro(a)'}</h3><div class="opts">${AVATARS[role].map(a=>`<button class="${avatars[role]===a?'on':''}" data-role="${role}" data-av="${a}">${a}</button>`).join('')}</div></div>`;
-  ov.innerHTML=`<div class="card">
+  const saved=loadProfile();
+  const pickRow=role=>`<div><h3>${role==='atendente'?'💁 Atendente':'🍨 Sorveteiro(a)'}</h3><div class="opts">${AVATARS[role].map(a=>`<button class="${P.avatars[role]===a?'on':''}" data-role="${role}" data-av="${a}">${a}</button>`).join('')}</div></div>`;
+  openOverlay(`<div class="card">
     <h1>🍦 Sorveteria Arco-Íris 🌈</h1>
-    <p>Hoje você cuida da sorveteria mais colorida da cidade! Troque de personagem quando quiser.</p>
+    <p>Cuide da sorveteria mais colorida da cidade! Troque de posto quando quiser.</p>
     <ol class="how">
-      <li><b>No balcão (Atendente):</b> leia o que o cliente fala e anote no bloquinho — recipiente, quantas bolas, sabores, cobertura e extras. Envie a comanda pra cozinha.</li>
-      <li><b>Na cozinha (Sorveteiro):</b> pegue a comanda e monte o sorvete. Aperte <b>Pronto!</b></li>
-      <li><b>De volta ao balcão:</b> clique no sorvete pronto para entregar.</li>
-      <li>Aperte <b>Tab</b> ou o botão 🔄 para trocar de personagem. O posto onde você <b>não</b> está trabalha sozinho!</li>
-      <li>A paciência ⏳ do cliente só começa a contar depois que o pedido é anotado.</li>
+      <li><b>Balcão:</b> leia o pedido do cliente e anote no bloquinho (recipiente, bolas, sabores, cobertura e extras).</li>
+      <li><b>Cozinha:</b> monte o sorvete conforme a comanda e aperte <b>Pronto!</b></li>
+      <li>O posto onde você <b>não</b> está trabalha sozinho. Troque com o botão 🔄 (ou <b>Tab</b>).</li>
+      <li>Depois de cada entrega aparece a <b>avaliação do cliente</b> mostrando o que acertou e quem errou.</li>
+      <li>Bata a <b>meta do dia</b> 🎯 e gaste suas moedas na <b>lojinha</b>: vidas, novos sabores, caldas, extras e melhorias!</li>
     </ol>
     <p><b>Escolha seus personagens:</b></p>
     <div class="pick">${pickRow('atendente')}${pickRow('sorveteiro')}</div>
-    <button class="big pink" id="startBtn" style="font-size:20px;padding:14px 30px">🎉 Abrir a sorveteria!</button>
-  </div>`;
-  ov.querySelectorAll('[data-av]').forEach(b=>b.onclick=()=>{avatars[b.dataset.role]=b.dataset.av;sfx.click();startScreen()});
-  $('#startBtn').onclick=startGame;
+    <div class="btns">
+      ${saved?`<button class="big pink" id="contBtn" style="font-size:18px">▶️ Continuar — Dia ${saved.day} (💰${saved.coins})</button>`:''}
+      <button class="big ${saved?'white':'pink'}" id="newBtn" style="font-size:18px">${saved?'🆕 Novo jogo':'🎉 Abrir a sorveteria!'}</button>
+    </div>
+    ${installHint()}
+  </div>`);
+  $('#overlay').querySelectorAll('[data-av]').forEach(b=>b.onclick=()=>{P.avatars[b.dataset.role]=b.dataset.av;sfx.click();if(saved)saveProfile();startScreen()});
+  if(saved)$('#contBtn').onclick=()=>{const av=P.avatars;P=loadProfile();P.avatars=av;startDay()};
+  $('#newBtn').onclick=()=>{
+    if(saved&&!confirm('Começar do zero? O progresso salvo será apagado.'))return;
+    const av=P.avatars;P=newProfile();P.avatars=av;clearProfile();startDay();
+  };
+  bindInstall();
 }
-function startGame(){
-  S=newState();S.running=true;
+function startDay(){
+  S=newDay();S.running=true;saveProfile();
   $('#overlay').classList.add('hidden');$('#views').classList.remove('kitchen');
+  $('#reviews').innerHTML='';
   sfx.good();
   renderHUD();renderNote();renderTray();renderStations();renderKitchen();updateSwitch();renderQueue();
+  toast(`☀️ Dia ${P.day} — Meta: 💰${S.goal}`,'info');
 }
-function endGame(win){
+function endDay(){
   S.running=false;
-  const stars=S.hearts<=0?0:S.coins>=180?3:S.coins>=100?2:S.coins>=40?1:0;
-  const ov=$('#overlay');ov.classList.remove('hidden');
-  ov.innerHTML=`<div class="card">
-    <h1>${win?'Fim do expediente!':'Ops! A sorveteria fechou 😢'}</h1>
+  const hit=S.earned>=S.goal,bonus=hit?20+P.day*10:0;
+  P.coins+=bonus;
+  const stars=S.earned>=S.goal*1.5?3:hit?2:S.earned>=S.goal*.5?1:0;
+  const doneDay=P.day;P.day++;saveProfile();
+  sfx.good();
+  openOverlay(`<div class="card">
+    <h1>Fim do Dia ${doneDay}!</h1>
     <div class="result-big">${'⭐'.repeat(stars)+'☆'.repeat(3-stars)}</div>
-    <p>${win?(stars===3?'Você é uma lenda dos sorvetes! 🏆':stars===2?'Muito bem! Os clientes saíram felizes 😊':'Bom trabalho! Amanhã dá pra ir ainda melhor 💪'):'Muitos clientes saíram chateados. Tente de novo!'}</p>
-    <div class="res-grid"><div><b>💰 ${S.coins}</b>moedas</div><div><b>${S.served}</b>atendidos</div><div><b>${S.perfect}</b>perfeitos</div></div>
-    <button class="big pink" id="againBtn" style="font-size:20px;padding:14px 30px">🔁 Jogar de novo</button>
-  </div>`;
-  $('#againBtn').onclick=startGame;
+    <p>${hit?`🎯 Meta batida! Bônus de <b>💰${bonus}</b>!`:`Faltou ${S.goal-S.earned} moedas para a meta. Amanhã você consegue! 💪`}</p>
+    <div class="res-grid">
+      <div><b>💰 ${S.earned}</b>ganhas hoje</div><div><b>${S.served}</b>atendidos</div>
+      <div><b>${S.perfect}</b>perfeitos</div><div><b>${S.lost}</b>foram embora</div>
+    </div>
+    <div class="wallet">Carteira: 💰 ${P.coins}</div>
+    <div class="btns"><button class="big pink" id="shopBtn" style="font-size:18px">🛒 Ir para a lojinha</button></div>
+  </div>`);
+  $('#shopBtn').onclick=shopScreen;
+}
+function gameOver(){
+  S.running=false;clearProfile();sfx.bad();
+  openOverlay(`<div class="card">
+    <h1>Ops! A sorveteria fechou 😢</h1>
+    <div class="result-big">💔</div>
+    <p>Acabaram as vidas no <b>Dia ${P.day}</b>. Clientes saíram chateados demais...</p>
+    <div class="res-grid"><div><b>📅 ${P.day}</b>dias</div><div><b>💰 ${P.coins}</b>moedas</div><div><b>${S.perfect}</b>perfeitos hoje</div></div>
+    <p>Dica: compre ❤️ e o 🛋️ sofazinho na lojinha para aguentar mais!</p>
+    <div class="btns"><button class="big pink" id="againBtn" style="font-size:18px">🔁 Começar de novo</button></div>
+  </div>`);
+  $('#againBtn').onclick=()=>{const av=P.avatars;P=newProfile();P.avatars=av;startDay()};
 }
 
-S=newState();
+/* ================= LOJINHA ================= */
+function shopScreen(){
+  const btn=(key,cost,can,label='Comprar')=>`<button data-buy="${key}" ${can&&P.coins>=cost?'':'disabled'}>${can?`${label} 💰${cost}`:'✔ Comprado'}</button>`;
+  const lockedF=FLAVORS.filter(f=>!P.flavors.includes(f.id));
+  const lockedC=CALDAS.filter(c=>!P.caldas.includes(c.id));
+  const lockedE=EXTRAS.filter(e=>!P.extras.includes(e.id));
+  const sec=(title,items)=>items.length?`<div class="shop-sec"><h3>${title}</h3><div class="shop-grid">${items.join('')}</div></div>`:'';
+  openOverlay(`<div class="card wide">
+    <h1>🛒 Lojinha</h1>
+    <div class="wallet">Você tem 💰 ${P.coins}</div>
+    <p>Itens novos aparecem nos pedidos e deixam os sorvetes mais caros (mais dinheiro!).</p>
+    ${sec('❤️ Vidas',[`<div class="si"><b>❤️ +1 vida</b><span>${'❤️'.repeat(P.hearts)}${'🤍'.repeat(5-P.hearts)}</span>${P.hearts<5?btn('heart',PRICE.heart,true):'<button disabled>Vidas cheias</button>'}</div>`])}
+    ${sec('⚙️ Melhorias',UPGRADES.map(u=>{const l=P.up[u.id],mx=l>=u.max;
+      return `<div class="si ${mx?'done':''}"><b>${u.emoji} ${u.name}</b><span>${u.desc}</span><span class="lv">${'●'.repeat(l)}${'○'.repeat(u.max-l)}</span>${btn('up:'+u.id,u.cost(l),!mx)}</div>`}))}
+    ${sec('🍨 Novos sabores',lockedF.map(f=>`<div class="si"><b><i class="swatch" style="background:${f.color}"></i>${f.name}</b>${btn('flavor:'+f.id,PRICE.flavor,true)}</div>`))}
+    ${sec('🍫 Novas caldas',lockedC.map(c=>`<div class="si"><b><i class="swatch" style="background:${c.color}"></i>${c.name}</b>${btn('calda:'+c.id,PRICE.calda,true)}</div>`))}
+    ${sec('✨ Novos extras',lockedE.map(e=>`<div class="si"><b>${e.emoji} ${e.name}</b>${btn('extra:'+e.id,PRICE.extra,true)}</div>`))}
+    <div class="btns"><button class="big pink" id="nextDayBtn" style="font-size:18px">☀️ Abrir o Dia ${P.day}</button></div>
+  </div>`);
+  $('#overlay').querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>buy(b.dataset.buy));
+  $('#nextDayBtn').onclick=startDay;
+}
+function buy(key){
+  const [type,id]=key.split(':');
+  let cost=0;
+  if(type==='heart'){cost=PRICE.heart;if(P.hearts>=5||P.coins<cost)return;P.hearts++}
+  else if(type==='up'){const u=UPGRADES.find(x=>x.id===id);cost=u.cost(P.up[id]);if(P.up[id]>=u.max||P.coins<cost)return;P.up[id]++}
+  else if(type==='flavor'){cost=PRICE.flavor;if(P.coins<cost)return;P.flavors.push(id)}
+  else if(type==='calda'){cost=PRICE.calda;if(P.coins<cost)return;P.caldas.push(id)}
+  else if(type==='extra'){cost=PRICE.extra;if(P.coins<cost)return;P.extras.push(id)}
+  P.coins-=cost;saveProfile();sfx.coin();vibrate(20);
+  const sc=$('#overlay .card').scrollTop;shopScreen();$('#overlay .card').scrollTop=sc;
+}
+
+/* ================= INSTALAR NO APARELHO (PWA) ================= */
+let deferredPrompt=null;
+const isStandalone=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone;
+const isIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+function installHint(){
+  if(isStandalone())return '';
+  if(deferredPrompt)return `<p style="margin-top:14px"><button class="big yellow" data-install>📲 Instalar o jogo no aparelho</button></p>`;
+  if(isIOS())return `<p style="margin-top:14px;font-size:14px">📲 <b>Para instalar no iPhone/iPad:</b> toque em <b>Compartilhar</b> ⬆️ no Safari e depois em <b>Adicionar à Tela de Início</b>.</p>`;
+  return '';
+}
+async function doInstall(){
+  if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice.catch(()=>{});deferredPrompt=null;$('#installBtn').classList.remove('show');return}
+  if(isIOS())toast('No Safari: toque em Compartilhar ⬆️ e depois em “Adicionar à Tela de Início”','info');
+}
+function bindInstall(){document.querySelectorAll('[data-install]').forEach(b=>b.onclick=doInstall)}
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();deferredPrompt=e;$('#installBtn').classList.add('show');
+  if(!S.running&&$('#overlay .card h1')?.textContent.includes('Sorveteria Arco'))startScreen();
+});
+window.addEventListener('appinstalled',()=>{deferredPrompt=null;$('#installBtn').classList.remove('show');toast('📲 Jogo instalado! Procure o ícone na tela inicial.','good')});
+$('#installBtn').addEventListener('click',doInstall);
+if(!isStandalone()&&isIOS())$('#installBtn').classList.add('show');
+if('serviceWorker' in navigator&&location.protocol.startsWith('http')){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+window.addEventListener('resize',()=>{if(S)updateSwitch()});
+
+/* ================= INÍCIO ================= */
+S=newDay();
 renderHUD();renderNote();renderTray();renderStations();renderKitchen();updateSwitch();renderQueue();
 startScreen();
 requestAnimationFrame(loop);
