@@ -10,6 +10,7 @@ Joguinhos feitos em HTML, CSS e JavaScript puro. Rodam direto no navegador, sem 
 |------|-------|--------|
 | 🍦 **Sorveteria Arco-Íris** | [Jogar agora](https://jefersondeoliveira.github.io/mini-games-html/sorveteria/) | [`sorveteria/`](sorveteria/) |
 | 🃏 **Jogo da Memória** | [Jogar agora](https://jefersondeoliveira.github.io/mini-games-html/memoria/) | [`memoria/`](memoria/) |
+| 🧪 **LabRemember** | [Jogar agora](https://jefersondeoliveira.github.io/mini-games-html/labremember/) | [`labremember/`](labremember/) |
 
 ### 🍦 Sorveteria Arco-Íris
 
@@ -31,6 +32,17 @@ Vire duas cartas por vez e encontre todos os pares de animais:
 - **Três níveis:** Fácil (6 pares), Médio (8 pares) e Difícil (12 pares). Os animais são sorteados a cada partida.
 - Conta as **jogadas** e o **tempo**, e guarda o **recorde** de cada nível no aparelho.
 - Funciona no celular e no computador, com mouse, toque ou teclado (setas para andar, Enter para virar).
+
+### 🧪 LabRemember
+
+Um jogo para decorar as regras de cada laboratório. Você mesmo cadastra as regras e treina com elas:
+
+- **Cadastro:** crie os laboratórios e, em cada um, os itens com **mínimo**, **máximo**, **margem** e unidade. Exemplo: Lab 1, Crioscopia, máximo 500 com margem 2 (até 502 ainda é OK).
+- **Rodadas de 10 perguntas**, de todos os laboratórios ou de um só, misturando dois tipos:
+  - **Julgar:** aparece um valor perto do limite e você responde OK ou Erro.
+  - **Limite:** qual é o mínimo ou o máximo daquele item, entre 4 alternativas.
+- As regras que você mais erra aparecem mais vezes.
+- Tudo fica salvo **só no navegador** do aparelho. Use **Exportar backup** e **Importar backup** para guardar uma cópia ou levar as regras para outro aparelho.
 
 ## Como rodar localmente
 

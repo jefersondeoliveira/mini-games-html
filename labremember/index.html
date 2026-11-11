@@ -1,0 +1,1072 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#087f75">
+<title>LabRemember</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --fundo: #eef4f2;
+    --linha: rgba(8, 127, 117, 0.07);
+    --cartao: #ffffff;
+    --tinta: #10292c;
+    --suave: #55706f;
+    --borda: #d3e1de;
+    --marca: #087f75;
+    --marca-forte: #066a62;
+    --sobre-marca: #ffffff;
+    --ok: #1a8a4a;
+    --ok-fundo: #e1f5e9;
+    --erro: #c93636;
+    --erro-fundo: #fde7e7;
+    --sombra: 0 1px 2px rgba(16, 41, 44, 0.06), 0 6px 20px rgba(16, 41, 44, 0.06);
+    --raio: 16px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fundo: #0d1a1c;
+      --linha: rgba(47, 196, 181, 0.06);
+      --cartao: #152629;
+      --tinta: #e7f3f1;
+      --suave: #98b4b2;
+      --borda: #28454a;
+      --marca: #2fc4b5;
+      --marca-forte: #57d6c9;
+      --sobre-marca: #06211f;
+      --ok: #52d18c;
+      --ok-fundo: #143a27;
+      --erro: #ff8080;
+      --erro-fundo: #4a2121;
+      --sombra: 0 6px 20px rgba(0, 0, 0, 0.3);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100dvh;
+    color: var(--tinta);
+    font-family: ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 16px;
+    line-height: 1.45;
+    background-color: var(--fundo);
+    background-image:
+      linear-gradient(var(--linha) 1px, transparent 1px),
+      linear-gradient(90deg, var(--linha) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .app {
+    width: min(100%, 560px);
+    margin: 0 auto;
+    padding: 20px 16px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  h1, h2, p { margin: 0; }
+  h1 { font-size: 1.7rem; font-weight: 800; letter-spacing: -0.02em; overflow-wrap: anywhere; }
+  h1:focus { outline: none; }
+  h2 { font-size: 1.05rem; font-weight: 800; }
+  .cab p { color: var(--suave); margin-top: 4px; }
+
+  .cartao {
+    background: var(--cartao);
+    border: 1px solid var(--borda);
+    border-radius: var(--raio);
+    box-shadow: var(--sombra);
+    padding: 16px;
+  }
+  .vazio { color: var(--suave); text-align: center; }
+  .cartao.vazio { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 24px 16px; }
+  .alerta {
+    background: var(--erro-fundo);
+    color: var(--erro);
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-weight: 600;
+  }
+
+  /* Botões */
+  .botao {
+    font: inherit;
+    font-weight: 700;
+    color: var(--marca-forte);
+    background: transparent;
+    border: 1.5px solid var(--borda);
+    border-radius: 12px;
+    padding: 9px 14px;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .botao:hover { border-color: var(--marca); }
+  .botao:disabled { opacity: 0.5; cursor: default; border-color: var(--borda); }
+  .botao.principal {
+    color: var(--sobre-marca);
+    background: var(--marca);
+    border-color: var(--marca);
+  }
+  .botao.principal:hover { background: var(--marca-forte); border-color: var(--marca-forte); }
+  .botao.grande { width: 100%; padding: 14px; font-size: 1.1rem; border-radius: 14px; }
+  .botao.perigo { color: var(--erro); }
+  .botao.perigo:hover { border-color: var(--erro); }
+  .botao.mini { padding: 6px 10px; font-size: 0.88rem; }
+  .botao.texto { border-color: transparent; padding-left: 4px; padding-right: 4px; }
+  button:focus-visible, select:focus-visible, input:focus-visible {
+    outline: 3px solid var(--marca);
+    outline-offset: 2px;
+  }
+
+  /* Campos */
+  .campo { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .campo > span { font-size: 0.82rem; font-weight: 700; color: var(--suave); }
+  input, select {
+    font: inherit;
+    color: var(--tinta);
+    background: var(--fundo);
+    border: 1.5px solid var(--borda);
+    border-radius: 12px;
+    padding: 10px 12px;
+    width: 100%;
+    min-width: 0;
+  }
+  .dupla { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* Início */
+  .jogar { display: flex; flex-direction: column; gap: 12px; }
+  .linha-titulo { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+  .lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .item-lab {
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--cartao);
+    border: 1px solid var(--borda);
+    border-radius: var(--raio);
+    box-shadow: var(--sombra);
+    padding: 14px 16px;
+    cursor: pointer;
+  }
+  .item-lab:hover { border-color: var(--marca); }
+  .item-lab .nome { flex: 1; font-weight: 800; font-size: 1.05rem; overflow-wrap: anywhere; }
+  .item-lab .info { color: var(--suave); font-size: 0.9rem; white-space: nowrap; }
+  .item-lab .seta { color: var(--marca); font-size: 1.3rem; line-height: 1; }
+  .rodape { display: flex; flex-direction: column; gap: 10px; align-items: center; margin-top: 6px; }
+  .rodape .botoes { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .rodape p { color: var(--suave); font-size: 0.85rem; text-align: center; }
+
+  /* Laboratório */
+  .topo-lab { display: flex; flex-direction: column; gap: 8px; }
+  .topo-lab .acoes-lab { display: flex; gap: 8px; flex-wrap: wrap; }
+  .regra { display: flex; flex-direction: column; gap: 4px; }
+  .regra .item { font-weight: 800; font-size: 1.05rem; overflow-wrap: anywhere; }
+  .regra .faixa { font-variant-numeric: tabular-nums; }
+  .regra .margem, .regra .placar { color: var(--suave); font-size: 0.88rem; font-variant-numeric: tabular-nums; }
+  .regra .acoes-regra { display: flex; gap: 8px; margin-top: 8px; }
+
+  /* Jogo */
+  .jogo-topo { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--suave); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .barra { height: 8px; border-radius: 99px; background: var(--borda); overflow: hidden; }
+  .barra i { display: block; height: 100%; background: var(--marca); border-radius: 99px; transition: width 0.3s; }
+  .pergunta { text-align: center; padding: 24px 16px; display: flex; flex-direction: column; gap: 4px; }
+  .pergunta .p-lab { color: var(--marca-forte); font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; font-size: 0.85rem; overflow-wrap: anywhere; }
+  .pergunta .p-item { font-size: 1.45rem; font-weight: 800; overflow-wrap: anywhere; }
+  .pergunta .p-valor {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: clamp(2.4rem, 13vw, 3.6rem);
+    font-weight: 700;
+    line-height: 1.15;
+    margin: 10px 0 4px;
+    overflow-wrap: anywhere;
+  }
+  .pergunta .p-texto { font-size: 1.1rem; margin-top: 10px; }
+  .pergunta .p-ajuda { color: var(--suave); }
+
+  .respostas { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .resp {
+    font: inherit;
+    font-weight: 800;
+    font-size: 1.25rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--tinta);
+    background: var(--cartao);
+    border: 2px solid var(--borda);
+    border-radius: var(--raio);
+    box-shadow: var(--sombra);
+    padding: 18px 10px;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    overflow-wrap: anywhere;
+  }
+  .resp.r-ok { color: var(--ok); border-color: var(--ok); }
+  .resp.r-erro { color: var(--erro); border-color: var(--erro); }
+  .resp:disabled { cursor: default; opacity: 0.45; box-shadow: none; }
+  .resp.certa:disabled { opacity: 1; color: var(--ok); border-color: var(--ok); background: var(--ok-fundo); }
+  .resp.errada:disabled { opacity: 1; color: var(--erro); border-color: var(--erro); background: var(--erro-fundo); }
+  .resp.certa::before { content: "✓ "; }
+  .resp.errada::before { content: "✗ "; }
+
+  .retorno { border-radius: var(--raio); padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+  .retorno.certo { background: var(--ok-fundo); }
+  .retorno.errado { background: var(--erro-fundo); }
+  .retorno .veredito { font-weight: 800; font-size: 1.15rem; }
+  .retorno.certo .veredito { color: var(--ok); }
+  .retorno.errado .veredito { color: var(--erro); }
+  .retorno p { font-variant-numeric: tabular-nums; }
+  .retorno .detalhe { font-size: 0.92rem; opacity: 0.85; }
+
+  /* Resultado */
+  .resultado { text-align: center; padding: 26px 16px; }
+  .resultado .nota { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 3.2rem; font-weight: 700; line-height: 1.1; }
+  .resultado .nota small { font-size: 1.3rem; color: var(--suave); }
+  .resultado .frase { font-weight: 800; font-size: 1.15rem; margin-top: 6px; }
+  .falha { display: flex; flex-direction: column; gap: 3px; }
+  .falha .onde { font-weight: 800; overflow-wrap: anywhere; }
+  .falha .seu { color: var(--erro); font-variant-numeric: tabular-nums; }
+  .falha .certo { font-variant-numeric: tabular-nums; }
+  .fim-botoes { display: flex; flex-direction: column; gap: 10px; }
+
+  /* Diálogos */
+  dialog {
+    width: min(92vw, 440px);
+    border: 1px solid var(--borda);
+    border-radius: 20px;
+    padding: 20px;
+    color: var(--tinta);
+    background: var(--cartao);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+  }
+  dialog::backdrop { background: rgba(6, 20, 22, 0.55); }
+  dialog form { display: flex; flex-direction: column; gap: 14px; }
+  dialog .acoes { display: flex; justify-content: flex-end; gap: 10px; }
+  .previa { background: var(--fundo); border-radius: 12px; padding: 10px 12px; font-size: 0.92rem; font-variant-numeric: tabular-nums; min-height: 2.9em; }
+  .erro-form { color: var(--erro); font-weight: 700; font-size: 0.92rem; }
+  .erro-form:empty { display: none; }
+
+  #toast {
+    position: fixed;
+    left: 50%;
+    bottom: 22px;
+    transform: translate(-50%, 20px);
+    max-width: calc(100vw - 32px);
+    background: var(--tinta);
+    color: var(--fundo);
+    font-weight: 700;
+    padding: 10px 16px;
+    border-radius: 99px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  #toast.visivel { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .barra i, #toast { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<main class="app" id="app"></main>
+
+<dialog id="dlg-lab" aria-labelledby="dlg-lab-titulo">
+  <form id="form-lab" novalidate>
+    <h2 id="dlg-lab-titulo">Novo laboratório</h2>
+    <label class="campo"><span>Nome</span>
+      <input id="f-lab-nome" maxlength="60" autocomplete="off" placeholder="Ex.: Lab 1">
+    </label>
+    <p class="erro-form" id="f-lab-erro" role="alert"></p>
+    <div class="acoes">
+      <button type="button" class="botao" data-fechar>Cancelar</button>
+      <button type="submit" class="botao principal">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-regra" aria-labelledby="dlg-regra-titulo">
+  <form id="form-regra" novalidate>
+    <h2 id="dlg-regra-titulo">Nova regra</h2>
+    <label class="campo"><span>Item</span>
+      <input id="f-item" list="itens" maxlength="60" autocomplete="off" placeholder="Ex.: Crioscopia">
+    </label>
+    <datalist id="itens"></datalist>
+    <div class="dupla">
+      <label class="campo"><span>Mínimo OK</span>
+        <input id="f-min" autocomplete="off" placeholder="sem mínimo">
+      </label>
+      <label class="campo"><span>Máximo OK</span>
+        <input id="f-max" autocomplete="off" placeholder="sem máximo">
+      </label>
+    </div>
+    <div class="dupla">
+      <label class="campo"><span>Margem</span>
+        <input id="f-margem" autocomplete="off" placeholder="0">
+      </label>
+      <label class="campo"><span>Unidade</span>
+        <input id="f-unidade" maxlength="12" autocomplete="off" placeholder="opcional">
+      </label>
+    </div>
+    <p class="previa" id="f-previa" aria-live="polite"></p>
+    <p class="erro-form" id="f-erro" role="alert"></p>
+    <div class="acoes">
+      <button type="button" class="botao" data-fechar>Cancelar</button>
+      <button type="submit" class="botao principal">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-confirma" aria-labelledby="dlg-confirma-texto">
+  <form id="form-confirma">
+    <p id="dlg-confirma-texto"></p>
+    <div class="acoes">
+      <button type="button" class="botao" data-fechar>Cancelar</button>
+      <button type="submit" class="botao principal" id="dlg-confirma-sim">Confirmar</button>
+    </div>
+  </form>
+</dialog>
+
+<input type="file" id="arquivo" accept=".json,application/json" hidden>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const CHAVE = 'labremember-v1';
+  const PERGUNTAS_POR_RODADA = 10;
+  const $ = (seletor) => document.querySelector(seletor);
+
+  // ---------- utilidades ----------
+  const novoId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  const sortear = (lista) => lista[Math.floor(Math.random() * lista.length)];
+  const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
+  const normalizar = (s) => s.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+
+  function embaralhar(lista) {
+    const a = lista.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  // ---------- números ----------
+  // Devolve { valor, casas }, null (campo vazio) ou undefined (texto inválido).
+  function lerNumero(texto) {
+    const t = String(texto).replace(/\s/g, '').replace(',', '.');
+    if (t === '') return null;
+    if (!/^-?\d+(\.\d{1,6})?$/.test(t)) return undefined;
+    return { valor: Number(t), casas: (t.split('.')[1] || '').length };
+  }
+
+  function arred(x, casas) {
+    const f = 10 ** casas;
+    return Math.round(x * f) / f + 0;   // "+ 0" evita o -0
+  }
+
+  function fmt(x, casas) {
+    return x.toLocaleString('pt-BR', {
+      minimumFractionDigits: casas, maximumFractionDigits: casas, useGrouping: false,
+    });
+  }
+
+  // ---------- regras ----------
+  // regra: { id, item, min, max, margem, casas, unidade, acertos, erros }
+  // OK quando o valor está entre (min - margem) e (max + margem), incluindo as pontas.
+  function faixaAceita(r) {
+    return {
+      lo: r.min == null ? null : arred(r.min - r.margem, r.casas),
+      hi: r.max == null ? null : arred(r.max + r.margem, r.casas),
+    };
+  }
+
+  function avaliar(r, valor) {
+    const { lo, hi } = faixaAceita(r);
+    return (lo == null || valor >= lo) && (hi == null || valor <= hi);
+  }
+
+  const comUnidade = (r, x) => fmt(x, r.casas) + (r.unidade ? ` ${r.unidade}` : '');
+
+  function textoFaixa(r, lo, hi, verbo) {
+    if (lo != null && hi != null) return `${verbo} de ${fmt(lo, r.casas)} a ${comUnidade(r, hi)}`;
+    if (hi != null) return `${verbo} até ${comUnidade(r, hi)}`;
+    return `${verbo} a partir de ${comUnidade(r, lo)}`;
+  }
+
+  const descrever = (r) => textoFaixa(r, r.min, r.max, 'OK');
+
+  function descreverMargem(r) {
+    if (!r.margem) return '';
+    const { lo, hi } = faixaAceita(r);
+    return `Margem ${fmt(r.margem, r.casas)}: ${textoFaixa(r, lo, hi, 'aceita')}`;
+  }
+
+  // ---------- perguntas ----------
+  // "Julgar": sorteia um valor perto de um dos limites; metade das vezes OK, metade Erro.
+  function perguntaJulgar(r) {
+    const passo = 10 ** -r.casas;
+    const { lo, hi } = faixaAceita(r);
+    const lados = [];
+    if (hi != null) lados.push('hi');
+    if (lo != null) lados.push('lo');
+    const lado = sortear(lados);
+    const borda = lado === 'hi' ? hi : lo;
+    const referencia = lado === 'hi' ? r.max : r.min;
+
+    const alcance = Math.max(5 * passo, 2 * r.margem, 0.05 * Math.abs(referencia));
+    const maxPassos = Math.max(3, Math.round(alcance / passo));
+    const querOk = Math.random() < 0.5;
+    const sinal = (lado === 'hi') === querOk ? -1 : 1;
+    // Se a regra só usa números positivos, evita sortear valores negativos.
+    const soPositivos = (r.min == null || r.min >= 0) && (r.max == null || r.max >= 0);
+
+    let valor;
+    for (let tentativa = 0; tentativa < 20; tentativa++) {
+      let k;   // distância da borda, em passos; o quadrado concentra perto da borda
+      if (querOk) {
+        k = Math.floor((maxPassos + 1) * Math.random() ** 2);
+        if (lo != null && hi != null) k = Math.min(k, Math.round((hi - lo) / passo));
+      } else {
+        k = 1 + Math.floor(maxPassos * Math.random() ** 2);
+      }
+      valor = arred(borda + sinal * k * passo, r.casas);
+      if (!soPositivos || valor >= 0) break;
+    }
+    return { tipo: 'julgar', regra: r, valor, correta: avaliar(r, valor) ? 'ok' : 'erro' };
+  }
+
+  // "Limite": qual é o mínimo/máximo cadastrado, entre 4 alternativas.
+  // As erradas vêm do mesmo item em outros laboratórios, da margem e de números vizinhos.
+  function perguntaLimite(r, todas) {
+    const lados = [];
+    if (r.max != null) lados.push('max');
+    if (r.min != null) lados.push('min');
+    const lado = sortear(lados);
+    const outroLado = lado === 'max' ? 'min' : 'max';
+    const certo = r[lado];
+
+    const opcoes = [certo];
+    const usados = new Set([fmt(certo, r.casas)]);
+    const tentar = (x, limite = 4) => {
+      const v = arred(x, r.casas);
+      const chave = fmt(v, r.casas);
+      if (opcoes.length >= limite || usados.has(chave)) return;
+      usados.add(chave);
+      opcoes.push(v);
+    };
+
+    const mesmoItem = todas.filter((o) => o !== r && normalizar(o.item) === normalizar(r.item));
+    const deOutros = [
+      ...embaralhar(mesmoItem.map((o) => o[lado])),
+      ...embaralhar([...mesmoItem.map((o) => o[outroLado]), r[outroLado]]),
+    ].filter((x) => x != null);
+    deOutros.forEach((x) => tentar(x, 3));
+
+    if (r.margem) tentar(certo + (lado === 'max' ? r.margem : -r.margem));
+
+    const passo = 10 ** -r.casas;
+    const grandeza = certo === 0 ? passo * 10 : 10 ** Math.floor(Math.log10(Math.abs(certo)));
+    const saltos = [0.1, 0.2, 0.5, 1].map((f) => Math.max(passo, arred(grandeza * f, r.casas)));
+    const perto = embaralhar([certo - saltos[0], certo + saltos[0], certo - saltos[1], certo + saltos[1]]);
+    const longe = embaralhar([certo - saltos[2], certo + saltos[2], certo - saltos[3], certo + saltos[3]]);
+    [...perto, ...longe].forEach((x) => tentar(x));
+    for (let n = 1; opcoes.length < 4; n++) {
+      tentar(certo + n * passo);
+      tentar(certo - n * passo);
+    }
+
+    opcoes.sort((a, b) => a - b);
+    return { tipo: 'limite', regra: r, lado, opcoes, correta: opcoes.indexOf(certo) };
+  }
+
+  // ---------- armazenamento ----------
+  // Aceita o conteúdo salvo ou um backup importado e devolve uma cópia limpa.
+  function higienizar(o) {
+    if (!o || !Array.isArray(o.labs)) throw new Error('formato');
+    const numero = (x) => (typeof x === 'number' && Number.isFinite(x) ? x : null);
+    const natural = (x) => (Number.isInteger(x) && x >= 0 ? x : 0);
+    const texto = (x, max) => (typeof x === 'string' ? x.trim().slice(0, max) : '');
+    return {
+      versao: 1,
+      labs: o.labs.map((l) => {
+        if (!l || !Array.isArray(l.regras) || !texto(l.nome, 60)) throw new Error('formato');
+        return {
+          id: texto(l.id, 40) || novoId(),
+          nome: texto(l.nome, 60),
+          regras: l.regras.map((r) => {
+            const min = numero(r && r.min);
+            const max = numero(r && r.max);
+            if (!r || !texto(r.item, 60) || (min == null && max == null)) throw new Error('formato');
+            if (min != null && max != null && min > max) throw new Error('formato');
+            return {
+              id: texto(r.id, 40) || novoId(),
+              item: texto(r.item, 60),
+              min,
+              max,
+              margem: Math.max(0, numero(r.margem) ?? 0),
+              casas: Math.min(6, natural(r.casas)),
+              unidade: texto(r.unidade, 12),
+              acertos: natural(r.acertos),
+              erros: natural(r.erros),
+            };
+          }),
+        };
+      }),
+    };
+  }
+
+  let armazenamentoOk = true;
+  function carregar() {
+    try {
+      const bruto = localStorage.getItem(CHAVE);
+      if (bruto) return higienizar(JSON.parse(bruto));
+    } catch (e) {
+      if (!(e instanceof SyntaxError) && e.message !== 'formato') armazenamentoOk = false;
+    }
+    return { versao: 1, labs: [] };
+  }
+
+  function salvar() {
+    try {
+      localStorage.setItem(CHAVE, JSON.stringify(dados));
+    } catch {
+      armazenamentoOk = false;
+      avisar('Não consegui salvar neste navegador.');
+    }
+  }
+
+  // ---------- estado ----------
+  let dados = carregar();
+  let tela = 'inicio';     // inicio | lab | jogo | resultado
+  let labAtual = null;     // id do laboratório aberto
+  let escopo = '';         // '' = todos os laboratórios, ou o id de um
+  let jogo = null;
+
+  const labPorId = (id) => dados.labs.find((l) => l.id === id);
+  const todasAsRegras = () => dados.labs.flatMap((l) => l.regras);
+
+  // ---------- telas ----------
+  function telaInicio() {
+    const total = todasAsRegras().length;
+    const comRegras = dados.labs.filter((l) => l.regras.length);
+    if (escopo && !comRegras.some((l) => l.id === escopo)) escopo = '';
+
+    const blocoJogar = total ? `
+      <label class="campo"><span>O que treinar</span>
+        <select id="escopo">
+          <option value="">Todos os laboratórios (${plural(total, 'regra', 'regras')})</option>
+          ${comRegras.map((l) => `
+            <option value="${esc(l.id)}" ${l.id === escopo ? 'selected' : ''}>${esc(l.nome)} (${plural(l.regras.length, 'regra', 'regras')})</option>`).join('')}
+        </select>
+      </label>
+      <button class="botao principal grande" data-acao="jogar">▶ Jogar</button>`
+      : '<p class="vazio">Cadastre pelo menos uma regra para começar a jogar.</p>';
+
+    const blocoLabs = dados.labs.length ? `
+      <ul class="lista">
+        ${dados.labs.map((l) => `
+          <li><button class="item-lab" data-acao="abrir-lab" data-id="${esc(l.id)}">
+            <span class="nome">${esc(l.nome)}</span>
+            <span class="info">${plural(l.regras.length, 'regra', 'regras')}</span>
+            <span class="seta" aria-hidden="true">›</span>
+          </button></li>`).join('')}
+      </ul>` : `
+      <div class="cartao vazio">
+        <p>Nenhum laboratório cadastrado ainda.</p>
+        <button class="botao" data-acao="exemplo">Criar um exemplo para testar</button>
+      </div>`;
+
+    return `
+      <header class="cab">
+        <h1 tabindex="-1"><span aria-hidden="true">🧪</span> LabRemember</h1>
+        <p>Cadastre as regras de cada laboratório e treine até decorar.</p>
+      </header>
+      ${armazenamentoOk ? '' : '<p class="alerta">Este navegador não está deixando salvar. O que você cadastrar some ao fechar a página.</p>'}
+      <section class="cartao jogar">${blocoJogar}</section>
+      <section>
+        <div class="linha-titulo">
+          <h2>Laboratórios</h2>
+          <button class="botao mini" data-acao="novo-lab">+ Novo laboratório</button>
+        </div>
+        ${blocoLabs}
+      </section>
+      <footer class="rodape">
+        <div class="botoes">
+          <button class="botao mini" data-acao="exportar" ${dados.labs.length ? '' : 'disabled'}>Exportar backup</button>
+          <button class="botao mini" data-acao="importar">Importar backup</button>
+        </div>
+        <p>As regras ficam salvas só neste navegador. Use o backup para guardar uma cópia ou levar para outro aparelho.</p>
+      </footer>`;
+  }
+
+  function telaLab() {
+    const lab = labPorId(labAtual);
+    const regras = lab.regras.length ? `
+      <ul class="lista">
+        ${lab.regras.map((r) => {
+          const jogadas = r.acertos + r.erros;
+          return `
+          <li class="cartao regra">
+            <span class="item">${esc(r.item)}</span>
+            <span class="faixa">${esc(descrever(r))}</span>
+            ${r.margem ? `<span class="margem">${esc(descreverMargem(r))}</span>` : ''}
+            <span class="placar">${jogadas ? `Acertou ${r.acertos} de ${jogadas}` : 'Ainda não treinada'}</span>
+            <div class="acoes-regra">
+              <button class="botao mini" data-acao="editar-regra" data-id="${esc(r.id)}">Editar</button>
+              <button class="botao mini perigo" data-acao="excluir-regra" data-id="${esc(r.id)}">Excluir</button>
+            </div>
+          </li>`;
+        }).join('')}
+      </ul>` : '<p class="cartao vazio">Este laboratório ainda não tem regras.</p>';
+
+    return `
+      <div class="topo-lab">
+        <div><button class="botao mini texto" data-acao="voltar">‹ Laboratórios</button></div>
+        <h1 tabindex="-1">${esc(lab.nome)}</h1>
+        <div class="acoes-lab">
+          <button class="botao mini" data-acao="renomear-lab">Renomear</button>
+          <button class="botao mini perigo" data-acao="excluir-lab">Excluir laboratório</button>
+        </div>
+      </div>
+      <section>
+        <div class="linha-titulo">
+          <h2>Regras</h2>
+          <button class="botao mini" data-acao="nova-regra">+ Nova regra</button>
+        </div>
+        ${regras}
+      </section>
+      ${lab.regras.length ? '<button class="botao principal grande" data-acao="treinar-lab">▶ Treinar este laboratório</button>' : ''}`;
+  }
+
+  function telaJogo() {
+    const p = jogo.atual;
+    const r = p.regra;
+    const respondida = jogo.resposta != null;
+    const marca = (valor, correta) => {
+      if (!respondida) return '';
+      if (valor === correta) return 'certa';
+      return valor === jogo.resposta ? 'errada' : '';
+    };
+
+    let corpo;
+    let respostas;
+    if (p.tipo === 'julgar') {
+      corpo = `
+        <div class="p-valor">${esc(comUnidade(r, p.valor))}</div>
+        <div class="p-ajuda">Esse resultado está OK ou é Erro?</div>`;
+      respostas = `
+        <button class="resp r-ok ${marca('ok', p.correta)}" data-resp="ok" ${respondida ? 'disabled' : ''}>OK</button>
+        <button class="resp r-erro ${marca('erro', p.correta)}" data-resp="erro" ${respondida ? 'disabled' : ''}>Erro</button>`;
+    } else {
+      corpo = `
+        <div class="p-texto">Qual é o <strong>${p.lado === 'max' ? 'máximo' : 'mínimo'}</strong> cadastrado?</div>
+        ${r.margem ? '<div class="p-ajuda">Sem contar a margem.</div>' : ''}`;
+      respostas = p.opcoes.map((x, i) => `
+        <button class="resp ${marca(String(i), String(p.correta))}" data-resp="${i}" ${respondida ? 'disabled' : ''}>${esc(comUnidade(r, x))}</button>`).join('');
+    }
+
+    let retorno = '';
+    if (respondida) {
+      const acertou = jogo.resposta === String(p.correta);
+      const fato = p.tipo === 'julgar'
+        ? `${comUnidade(r, p.valor)} é ${p.correta === 'ok' ? 'OK' : 'Erro'}.`
+        : `O ${p.lado === 'max' ? 'máximo' : 'mínimo'} é ${comUnidade(r, r[p.lado])}.`;
+      retorno = `
+        <div class="retorno ${acertou ? 'certo' : 'errado'}">
+          <span class="veredito">${acertou ? '✓ Certo!' : '✗ Errado'}</span>
+          <p>${esc(fato)}</p>
+          <p class="detalhe">Regra: ${esc(descrever(r))}${r.margem ? ` · ${esc(descreverMargem(r))}` : ''}</p>
+        </div>
+        <button class="botao principal grande" data-acao="proxima" id="proxima">
+          ${jogo.n >= PERGUNTAS_POR_RODADA ? 'Ver resultado' : 'Próxima'}
+        </button>`;
+    }
+
+    return `
+      <div class="jogo-topo">
+        <button class="botao mini texto" data-acao="sair">✕ Sair</button>
+        <span>Pergunta ${jogo.n} de ${PERGUNTAS_POR_RODADA}</span>
+        <span aria-label="${plural(jogo.acertos, 'acerto', 'acertos')}">✓ ${jogo.acertos}</span>
+      </div>
+      <div class="barra" aria-hidden="true"><i style="width:${((jogo.n - (respondida ? 0 : 1)) / PERGUNTAS_POR_RODADA) * 100}%"></i></div>
+      <section class="cartao pergunta">
+        <div class="p-lab">${esc(p.lab.nome)}</div>
+        <h1 class="p-item" tabindex="-1">${esc(r.item)}</h1>
+        ${corpo}
+      </section>
+      <div class="respostas">${respostas}</div>
+      ${retorno}`;
+  }
+
+  function telaResultado() {
+    const total = PERGUNTAS_POR_RODADA;
+    const frase = jogo.acertos === total ? 'Perfeito! 🎯'
+      : jogo.acertos >= total * 0.8 ? 'Muito bem!'
+      : jogo.acertos >= total * 0.5 ? 'Está quase lá.'
+      : 'Vale treinar mais um pouco.';
+
+    const falhas = jogo.falhas.length ? `
+      <section>
+        <div class="linha-titulo"><h2>O que você errou</h2></div>
+        <ul class="lista">
+          ${jogo.falhas.map((f) => `
+            <li class="cartao falha">
+              <span class="onde">${esc(f.lab)} · ${esc(f.item)}</span>
+              <span class="seu">${esc(f.seu)}</span>
+              <span class="certo">${esc(f.certo)}</span>
+            </li>`).join('')}
+        </ul>
+      </section>` : '';
+
+    return `
+      <section class="cartao resultado">
+        <h1 class="nota" tabindex="-1">${jogo.acertos}<small> de ${total}</small></h1>
+        <p class="frase">${frase}</p>
+      </section>
+      ${falhas}
+      <div class="fim-botoes">
+        <button class="botao principal grande" data-acao="jogar-de-novo">▶ Jogar de novo</button>
+        <button class="botao grande" data-acao="voltar">Voltar ao início</button>
+      </div>`;
+  }
+
+  function render() {
+    if (tela === 'lab' && !labPorId(labAtual)) tela = 'inicio';
+    $('#app').innerHTML =
+      tela === 'inicio' ? telaInicio()
+      : tela === 'lab' ? telaLab()
+      : tela === 'jogo' ? telaJogo()
+      : telaResultado();
+  }
+
+  function ir(novaTela) {
+    tela = novaTela;
+    render();
+    window.scrollTo(0, 0);
+    const titulo = $('#app h1');
+    if (titulo) titulo.focus({ preventScroll: true });
+  }
+
+  let relogioAviso;
+  function avisar(texto) {
+    const toast = $('#toast');
+    toast.textContent = texto;
+    toast.classList.add('visivel');
+    clearTimeout(relogioAviso);
+    relogioAviso = setTimeout(() => toast.classList.remove('visivel'), 2600);
+  }
+
+  // ---------- jogo ----------
+  function comecarJogo(idLab) {
+    const labs = idLab ? dados.labs.filter((l) => l.id === idLab) : dados.labs;
+    const fila = labs.flatMap((lab) => lab.regras.map((regra) => ({ lab, regra })));
+    if (!fila.length) {
+      avisar('Cadastre uma regra antes de jogar.');
+      return;
+    }
+    jogo = { idLab, fila, n: 0, acertos: 0, falhas: [], atual: null, resposta: null };
+    proximaPergunta();
+  }
+
+  // Regras com mais erros aparecem mais; evita repetir a mesma regra em seguida.
+  function proximaPergunta() {
+    const anterior = jogo.atual && jogo.atual.regra;
+    const candidatas = jogo.fila.length > 1 ? jogo.fila.filter((c) => c.regra !== anterior) : jogo.fila;
+    const pesos = candidatas.map((c) => Math.min(5, 1 + (2 * c.regra.erros) / (1 + c.regra.acertos)));
+    let alvo = Math.random() * pesos.reduce((a, b) => a + b, 0);
+    let escolhida = candidatas[candidatas.length - 1];
+    for (let i = 0; i < candidatas.length; i++) {
+      alvo -= pesos[i];
+      if (alvo < 0) { escolhida = candidatas[i]; break; }
+    }
+    const pergunta = Math.random() < 0.5
+      ? perguntaJulgar(escolhida.regra)
+      : perguntaLimite(escolhida.regra, todasAsRegras());
+    jogo.atual = { ...pergunta, lab: escolhida.lab };
+    jogo.resposta = null;
+    jogo.n++;
+    ir('jogo');
+  }
+
+  function responder(resposta) {
+    if (jogo.resposta != null) return;
+    const p = jogo.atual;
+    const r = p.regra;
+    jogo.resposta = resposta;
+    const acertou = resposta === String(p.correta);
+    if (acertou) {
+      jogo.acertos++;
+      r.acertos++;
+    } else {
+      r.erros++;
+      const regra = `Regra: ${descrever(r)}${r.margem ? ` · ${descreverMargem(r)}` : ''}`;
+      jogo.falhas.push(p.tipo === 'julgar' ? {
+        lab: p.lab.nome,
+        item: r.item,
+        seu: `Você marcou ${resposta === 'ok' ? 'OK' : 'Erro'} para ${comUnidade(r, p.valor)}`,
+        certo: regra,
+      } : {
+        lab: p.lab.nome,
+        item: r.item,
+        seu: `Você disse que o ${p.lado === 'max' ? 'máximo' : 'mínimo'} é ${comUnidade(r, p.opcoes[Number(resposta)])}`,
+        certo: regra,
+      });
+    }
+    salvar();
+    render();
+    $('#proxima').focus();
+  }
+
+  // ---------- diálogos ----------
+  function confirmar(texto, rotulo, aoConfirmar) {
+    $('#dlg-confirma-texto').textContent = texto;
+    $('#dlg-confirma-sim').textContent = rotulo;
+    $('#form-confirma').onsubmit = (e) => {
+      e.preventDefault();
+      $('#dlg-confirma').close();
+      aoConfirmar();
+    };
+    $('#dlg-confirma').showModal();
+  }
+
+  let labEmEdicao = null;   // id do laboratório sendo renomeado, ou null para um novo
+  function abrirDialogoLab(lab) {
+    labEmEdicao = lab ? lab.id : null;
+    $('#dlg-lab-titulo').textContent = lab ? 'Renomear laboratório' : 'Novo laboratório';
+    $('#f-lab-nome').value = lab ? lab.nome : '';
+    $('#f-lab-erro').textContent = '';
+    $('#dlg-lab').showModal();
+  }
+
+  $('#form-lab').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const nome = $('#f-lab-nome').value.trim();
+    if (!nome) {
+      $('#f-lab-erro').textContent = 'Dê um nome ao laboratório.';
+      return;
+    }
+    const repetido = dados.labs.some((l) => l.id !== labEmEdicao && normalizar(l.nome) === normalizar(nome));
+    if (repetido) {
+      $('#f-lab-erro').textContent = 'Já existe um laboratório com esse nome.';
+      return;
+    }
+    if (labEmEdicao) {
+      labPorId(labEmEdicao).nome = nome;
+    } else {
+      const lab = { id: novoId(), nome, regras: [] };
+      dados.labs.push(lab);
+      labAtual = lab.id;
+    }
+    salvar();
+    $('#dlg-lab').close();
+    ir('lab');
+  });
+
+  let regraEmEdicao = null;   // id da regra sendo editada, ou null para uma nova
+  function abrirDialogoRegra(regra) {
+    regraEmEdicao = regra ? regra.id : null;
+    $('#dlg-regra-titulo').textContent = regra ? 'Editar regra' : 'Nova regra';
+    $('#f-item').value = regra ? regra.item : '';
+    $('#f-min').value = regra && regra.min != null ? fmt(regra.min, regra.casas) : '';
+    $('#f-max').value = regra && regra.max != null ? fmt(regra.max, regra.casas) : '';
+    $('#f-margem').value = regra && regra.margem ? fmt(regra.margem, regra.casas) : '';
+    $('#f-unidade').value = regra ? regra.unidade : '';
+    $('#f-erro').textContent = '';
+    const nomes = [...new Map(todasAsRegras().map((r) => [normalizar(r.item), r.item])).values()];
+    $('#itens').innerHTML = nomes.map((n) => `<option value="${esc(n)}">`).join('');
+    atualizarPrevia();
+    $('#dlg-regra').showModal();
+  }
+
+  function lerFormularioRegra() {
+    const item = $('#f-item').value.trim();
+    const min = lerNumero($('#f-min').value);
+    const max = lerNumero($('#f-max').value);
+    const margem = lerNumero($('#f-margem').value);
+    if (!item) return { erro: 'Dê um nome ao item.' };
+    if (min === undefined || max === undefined || margem === undefined) {
+      return { erro: 'Use só números, como 500 ou 0,53.' };
+    }
+    if (!min && !max) return { erro: 'Preencha o mínimo, o máximo ou os dois.' };
+    if (min && max && min.valor > max.valor) return { erro: 'O mínimo não pode ser maior que o máximo.' };
+    if (margem && margem.valor < 0) return { erro: 'A margem não pode ser negativa.' };
+    return {
+      regra: {
+        item,
+        min: min ? min.valor : null,
+        max: max ? max.valor : null,
+        margem: margem ? margem.valor : 0,
+        casas: Math.max(min ? min.casas : 0, max ? max.casas : 0, margem ? margem.casas : 0),
+        unidade: $('#f-unidade').value.trim(),
+      },
+    };
+  }
+
+  function atualizarPrevia() {
+    const { regra } = lerFormularioRegra();
+    $('#f-previa').textContent = regra
+      ? `${descrever(regra)}.${regra.margem ? ` ${descreverMargem(regra)}.` : ''} Fora disso é Erro.`
+      : 'Preencha o item e pelo menos um limite para ver a regra.';
+  }
+
+  $('#form-regra').addEventListener('input', () => {
+    $('#f-erro').textContent = '';
+    atualizarPrevia();
+  });
+
+  $('#form-regra').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const lab = labPorId(labAtual);
+    const { regra, erro } = lerFormularioRegra();
+    if (erro) {
+      $('#f-erro').textContent = erro;
+      return;
+    }
+    const repetida = lab.regras.some((r) => r.id !== regraEmEdicao && normalizar(r.item) === normalizar(regra.item));
+    if (repetida) {
+      $('#f-erro').textContent = `${lab.nome} já tem uma regra para esse item.`;
+      return;
+    }
+    if (regraEmEdicao) {
+      Object.assign(lab.regras.find((r) => r.id === regraEmEdicao), regra);
+    } else {
+      lab.regras.push({ id: novoId(), ...regra, acertos: 0, erros: 0 });
+    }
+    salvar();
+    $('#dlg-regra').close();
+    render();
+    avisar('Regra salva.');
+  });
+
+  document.querySelectorAll('[data-fechar]').forEach((botao) => {
+    botao.addEventListener('click', () => botao.closest('dialog').close());
+  });
+
+  // ---------- backup ----------
+  function exportar() {
+    const conteudo = { app: 'labremember', exportadoEm: new Date().toISOString(), ...dados };
+    const blob = new Blob([JSON.stringify(conteudo, null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    const hoje = new Date();
+    const dia = [hoje.getFullYear(), hoje.getMonth() + 1, hoje.getDate()].map((n) => String(n).padStart(2, '0')).join('-');
+    link.download = `labremember-backup-${dia}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+    avisar('Backup exportado.');
+  }
+
+  function importar(textoDoArquivo) {
+    let novos;
+    try {
+      novos = higienizar(JSON.parse(textoDoArquivo));
+    } catch {
+      avisar('Esse arquivo não é um backup do LabRemember.');
+      return;
+    }
+    const regras = novos.labs.reduce((n, l) => n + l.regras.length, 0);
+    const resumo = `${plural(novos.labs.length, 'laboratório', 'laboratórios')} e ${plural(regras, 'regra', 'regras')}`;
+    const aplicar = () => {
+      dados = novos;
+      salvar();
+      ir('inicio');
+      avisar('Backup importado.');
+    };
+    if (dados.labs.length) {
+      confirmar(`O arquivo tem ${resumo}. Importar substitui tudo o que está cadastrado neste navegador.`, 'Substituir', aplicar);
+    } else {
+      aplicar();
+    }
+  }
+
+  $('#arquivo').addEventListener('change', async (e) => {
+    const arquivo = e.target.files[0];
+    e.target.value = '';
+    if (arquivo) importar(await arquivo.text());
+  });
+
+  // ---------- eventos ----------
+  $('#app').addEventListener('change', (e) => {
+    if (e.target.id === 'escopo') escopo = e.target.value;
+  });
+
+  $('#app').addEventListener('click', (e) => {
+    const resp = e.target.closest('[data-resp]');
+    if (resp) {
+      responder(resp.dataset.resp);
+      return;
+    }
+    const botao = e.target.closest('[data-acao]');
+    if (!botao) return;
+    const id = botao.dataset.id;
+    const lab = labPorId(labAtual);
+
+    switch (botao.dataset.acao) {
+      case 'jogar': comecarJogo(escopo); break;
+      case 'treinar-lab': comecarJogo(labAtual); break;
+      case 'jogar-de-novo': comecarJogo(jogo.idLab); break;
+      case 'proxima':
+        if (jogo.n >= PERGUNTAS_POR_RODADA) ir('resultado');
+        else proximaPergunta();
+        break;
+      case 'sair':
+        confirmar('Sair da rodada? O que você já respondeu continua contando nas regras.', 'Sair', () => ir('inicio'));
+        break;
+      case 'voltar': ir('inicio'); break;
+      case 'abrir-lab': labAtual = id; ir('lab'); break;
+      case 'novo-lab': abrirDialogoLab(null); break;
+      case 'renomear-lab': abrirDialogoLab(lab); break;
+      case 'excluir-lab':
+        confirmar(`Excluir ${lab.nome}${lab.regras.length ? ` e ${plural(lab.regras.length, 'regra', 'regras')}` : ''}? Não dá para desfazer.`, 'Excluir', () => {
+          dados.labs = dados.labs.filter((l) => l !== lab);
+          salvar();
+          ir('inicio');
+        });
+        break;
+      case 'nova-regra': abrirDialogoRegra(null); break;
+      case 'editar-regra': abrirDialogoRegra(lab.regras.find((r) => r.id === id)); break;
+      case 'excluir-regra': {
+        const regra = lab.regras.find((r) => r.id === id);
+        confirmar(`Excluir a regra de ${regra.item}?`, 'Excluir', () => {
+          lab.regras = lab.regras.filter((r) => r !== regra);
+          salvar();
+          render();
+        });
+        break;
+      }
+      case 'exemplo':
+        dados.labs.push({
+          id: novoId(),
+          nome: 'Lab 1',
+          regras: [{ id: novoId(), item: 'Crioscopia', min: null, max: 500, margem: 2, casas: 0, unidade: '', acertos: 0, erros: 0 }],
+        });
+        salvar();
+        render();
+        break;
+      case 'exportar': exportar(); break;
+      case 'importar': $('#arquivo').click(); break;
+    }
+  });
+
+  // Funções puras expostas para conferência no console do navegador.
+  window.LabRemember = { lerNumero, faixaAceita, avaliar, descrever, descreverMargem, perguntaJulgar, perguntaLimite, higienizar };
+
+  render();
+})();
+</script>
+</body>
+</html>
