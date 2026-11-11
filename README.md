@@ -9,6 +9,7 @@ Joguinhos feitos em HTML, CSS e JavaScript puro. Rodam direto no navegador, sem 
 | Jogo | Jogar | Código |
 |------|-------|--------|
 | 🍦 **Sorveteria Arco-Íris** | [Jogar agora](https://jefersondeoliveira.github.io/mini-games-html/sorveteria/) | [`sorveteria/`](sorveteria/) |
+| 🃏 **Jogo da Memória** | [Jogar agora](https://jefersondeoliveira.github.io/mini-games-html/memoria/) | [`memoria/`](memoria/) |
 
 ### 🍦 Sorveteria Arco-Íris
 
@@ -22,6 +23,14 @@ Você cuida de uma sorveteria colorida e pode trocar de posto quando quiser:
 - Funciona no celular e pode ser **instalado** como app:
   - **Android/Chrome:** toque em "📲 Instalar".
   - **iPhone/iPad:** no Safari, toque em *Compartilhar* e depois em *Adicionar à Tela de Início*.
+
+### 🃏 Jogo da Memória
+
+Vire duas cartas por vez e encontre todos os pares de animais:
+
+- **Três níveis:** Fácil (6 pares), Médio (8 pares) e Difícil (12 pares). Os animais são sorteados a cada partida.
+- Conta as **jogadas** e o **tempo**, e guarda o **recorde** de cada nível no aparelho.
+- Funciona no celular e no computador, com mouse, toque ou teclado (setas para andar, Enter para virar).
 
 ## Como rodar localmente
 

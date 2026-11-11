@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jogo da Memória</title>
+<style>
+  :root {
+    --fundo-1: #1b1430;
+    --fundo-2: #2c1d52;
+    --texto: #fff6e6;
+    --texto-suave: #c9bde6;
+    --painel: rgba(255, 255, 255, 0.07);
+    --borda: rgba(255, 255, 255, 0.14);
+    --verso-1: #ff7a59;
+    --verso-2: #f25c3a;
+    --frente: #fff8ec;
+    --destaque: #ffd166;
+    --acerto: #5fd38d;
+    --erro: #ff6b8a;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { margin: 0; }
+
+  body {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 20px 16px 24px;
+    color: var(--texto);
+    font-family: ui-rounded, "SF Pro Rounded", "Nunito", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background:
+      radial-gradient(900px 500px at 15% -10%, rgba(255, 122, 89, 0.22), transparent 60%),
+      radial-gradient(800px 500px at 100% 110%, rgba(95, 211, 141, 0.14), transparent 60%),
+      linear-gradient(160deg, var(--fundo-1), var(--fundo-2));
+    background-attachment: fixed;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(1.5rem, 5vw, 2.1rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  h1 span { color: var(--destaque); }
+
+  .topo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+  }
+
+  /* Seletor de nível */
+  .niveis {
+    display: inline-flex;
+    padding: 4px;
+    gap: 4px;
+    border-radius: 999px;
+    background: var(--painel);
+    border: 1px solid var(--borda);
+  }
+  .niveis button {
+    font: inherit;
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: var(--texto-suave);
+    background: transparent;
+    border: 0;
+    border-radius: 999px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+  .niveis button:hover { color: var(--texto); }
+  .niveis button[aria-pressed="true"] {
+    background: var(--destaque);
+    color: #2b1d00;
+  }
+
+  /* Placar */
+  .placar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    width: min(100%, 560px);
+  }
+  .placar div {
+    background: var(--painel);
+    border: 1px solid var(--borda);
+    border-radius: 14px;
+    padding: 8px 10px;
+    text-align: center;
+    min-width: 0;
+  }
+  .placar .rotulo {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--texto-suave);
+  }
+  .placar .valor {
+    font-size: 1.15rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    border: 0;
+    padding: 0;
+    background: none;
+  }
+  .placar .valor.pequeno { font-size: 0.95rem; line-height: 1.6; }
+
+  /* Tabuleiro */
+  .tabuleiro {
+    --cols: 4;
+    --rows: 4;
+    --max: 560px;
+    display: grid;
+    grid-template-columns: repeat(var(--cols), 1fr);
+    gap: clamp(6px, 1.6vw, 12px);
+    width: min(100%, var(--max), calc(max(240px, 100dvh - 310px) * var(--cols) / var(--rows)));
+  }
+  .tabuleiro[data-nivel="facil"]   { --cols: 4; --rows: 3; }
+  .tabuleiro[data-nivel="medio"]   { --cols: 4; --rows: 4; }
+  .tabuleiro[data-nivel="dificil"] { --cols: 6; --rows: 4; --max: 780px; }
+  @media (max-width: 560px) {
+    .tabuleiro[data-nivel="dificil"] { --cols: 4; --rows: 6; --max: 560px; }
+  }
+
+  .carta {
+    position: relative;
+    aspect-ratio: 1;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    perspective: 700px;
+    container-type: inline-size;
+    border-radius: 14%;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  .carta:focus-visible {
+    outline: 3px solid var(--destaque);
+    outline-offset: 3px;
+  }
+  .carta-miolo {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+    transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .carta.aberta .carta-miolo { transform: rotateY(180deg); }
+  .carta:not(.aberta):hover .carta-miolo { transform: translateY(-3px); }
+
+  .face {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    border-radius: 14%;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+  }
+  .verso {
+    background:
+      repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.13) 0 8px, transparent 8px 16px),
+      linear-gradient(145deg, var(--verso-1), var(--verso-2));
+    border: 3px solid rgba(255, 255, 255, 0.35);
+  }
+  .verso::after {
+    content: "?";
+    font-size: 42cqw;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.85);
+    text-shadow: 0 2px 0 rgba(0, 0, 0, 0.15);
+  }
+  .frente {
+    transform: rotateY(180deg);
+    background: var(--frente);
+    font-size: 58cqw;
+    line-height: 1;
+    border: 3px solid transparent;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .carta.achada { cursor: default; }
+  .carta.achada .frente {
+    border-color: var(--acerto);
+    box-shadow: 0 0 0 3px rgba(95, 211, 141, 0.3), 0 6px 14px rgba(0, 0, 0, 0.3);
+    animation: acertou 0.5s ease;
+  }
+  .carta.errou .frente { border-color: var(--erro); }
+  .carta.errou { animation: tremer 0.4s ease 0.3s; }
+
+  @keyframes acertou {
+    0%   { transform: rotateY(180deg) scale(1); }
+    50%  { transform: rotateY(180deg) scale(1.1); }
+    100% { transform: rotateY(180deg) scale(1); }
+  }
+  @keyframes tremer {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+
+  /* Botões */
+  .botao {
+    font: inherit;
+    font-weight: 800;
+    font-size: 1rem;
+    color: #2b1d00;
+    background: var(--destaque);
+    border: 0;
+    border-radius: 999px;
+    padding: 12px 26px;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #c99a2e;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .botao:hover { transform: translateY(-1px); box-shadow: 0 5px 0 #c99a2e; }
+  .botao:active { transform: translateY(3px); box-shadow: 0 1px 0 #c99a2e; }
+  .botao:focus-visible, .niveis button:focus-visible {
+    outline: 3px solid var(--texto);
+    outline-offset: 3px;
+  }
+
+  /* Vitória */
+  dialog {
+    border: 1px solid var(--borda);
+    border-radius: 24px;
+    padding: 28px 28px 24px;
+    max-width: min(90vw, 380px);
+    text-align: center;
+    color: var(--texto);
+    background: linear-gradient(160deg, #33225f, #221740);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+  }
+  dialog::backdrop { background: rgba(10, 6, 24, 0.7); backdrop-filter: blur(3px); }
+  dialog[open] { animation: surgir 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2); }
+  dialog .trofeu { font-size: 3.4rem; line-height: 1; }
+  dialog h2 { margin: 10px 0 6px; font-size: 1.6rem; }
+  dialog p { margin: 0 0 6px; color: var(--texto-suave); }
+  dialog p strong { color: var(--texto); }
+  dialog .recorde-novo { color: var(--destaque); font-weight: 800; }
+  dialog .botao { margin-top: 16px; }
+  @keyframes surgir {
+    from { opacity: 0; transform: translateY(16px) scale(0.94); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  .so-leitor {
+    position: absolute;
+    width: 1px; height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .carta-miolo { transition-duration: 0.01s; }
+    .carta.errou, .carta.achada .frente, dialog[open] { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <h1>Jogo da <span>Memória</span></h1>
+
+  <div class="niveis" role="group" aria-label="Nível de dificuldade">
+    <button type="button" data-nivel="facil" aria-pressed="false">Fácil</button>
+    <button type="button" data-nivel="medio" aria-pressed="true">Médio</button>
+    <button type="button" data-nivel="dificil" aria-pressed="false">Difícil</button>
+  </div>
+
+  <div class="placar">
+    <div><span class="rotulo">Jogadas</span><div class="valor" id="jogadas">0</div></div>
+    <div><span class="rotulo">Tempo</span><div class="valor" id="tempo">00:00</div></div>
+    <div><span class="rotulo">Recorde</span><div class="valor pequeno" id="recorde">—</div></div>
+  </div>
+</header>
+
+<main class="tabuleiro" id="tabuleiro" data-nivel="medio" aria-label="Tabuleiro"></main>
+
+<button type="button" class="botao" id="novo">Novo jogo</button>
+
+<div class="so-leitor" aria-live="polite" id="aviso"></div>
+
+<dialog id="vitoria" aria-labelledby="vitoria-titulo">
+  <div class="trofeu" aria-hidden="true">🏆</div>
+  <h2 id="vitoria-titulo">Você venceu!</h2>
+  <p id="vitoria-resumo"></p>
+  <p id="vitoria-recorde"></p>
+  <button type="button" class="botao" id="de-novo">Jogar de novo</button>
+</dialog>
+
+<script>
+(() => {
+  const ANIMAIS = [
+    ['🐶', 'cachorro'], ['🐱', 'gato'], ['🦊', 'raposa'], ['🐼', 'panda'],
+    ['🐸', 'sapo'], ['🦁', 'leão'], ['🐵', 'macaco'], ['🐧', 'pinguim'],
+    ['🐢', 'tartaruga'], ['🦋', 'borboleta'], ['🐙', 'polvo'], ['🦄', 'unicórnio'],
+  ];
+  const PARES_POR_NIVEL = { facil: 6, medio: 8, dificil: 12 };
+  const ESPERA_ERRO_MS = 900;
+
+  const el = {
+    tabuleiro: document.getElementById('tabuleiro'),
+    jogadas: document.getElementById('jogadas'),
+    tempo: document.getElementById('tempo'),
+    recorde: document.getElementById('recorde'),
+    aviso: document.getElementById('aviso'),
+    novo: document.getElementById('novo'),
+    niveis: document.querySelectorAll('.niveis button'),
+    vitoria: document.getElementById('vitoria'),
+    resumo: document.getElementById('vitoria-resumo'),
+    textoRecorde: document.getElementById('vitoria-recorde'),
+    deNovo: document.getElementById('de-novo'),
+  };
+
+  let nivel = 'medio';
+  let cartas = [];        // { id, emoji, nome, aberta, achada, botao }
+  let primeira = null;    // índice da primeira carta aberta na jogada
+  let pendente = null;    // par errado esperando para desvirar
+  let jogadas = 0;
+  let paresAchados = 0;
+  let inicio = 0;
+  let relogio = null;
+
+  function embaralhar(lista) {
+    const a = lista.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function formatarTempo(segundos) {
+    const m = String(Math.floor(segundos / 60)).padStart(2, '0');
+    const s = String(segundos % 60).padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  function segundosDecorridos() {
+    return inicio ? Math.floor((Date.now() - inicio) / 1000) : 0;
+  }
+
+  // --- Recorde (salvo no navegador; o jogo funciona mesmo sem ele) ---
+  function lerRecorde() {
+    try {
+      const r = JSON.parse(localStorage.getItem(`memoria-recorde-${nivel}`));
+      return r && Number.isFinite(r.jogadas) && Number.isFinite(r.tempo) ? r : null;
+    } catch { return null; }
+  }
+  function salvarRecorde(r) {
+    try { localStorage.setItem(`memoria-recorde-${nivel}`, JSON.stringify(r)); } catch {}
+  }
+  function mostrarRecorde() {
+    const r = lerRecorde();
+    el.recorde.textContent = r ? `${r.jogadas} · ${formatarTempo(r.tempo)}` : '—';
+  }
+
+  // --- Relógio ---
+  function pararRelogio() {
+    clearInterval(relogio);
+    relogio = null;
+  }
+  function iniciarRelogio() {
+    inicio = Date.now();
+    relogio = setInterval(() => {
+      el.tempo.textContent = formatarTempo(segundosDecorridos());
+    }, 250);
+  }
+
+  // --- Cartas ---
+  function atualizarCarta(i) {
+    const c = cartas[i];
+    c.botao.classList.toggle('aberta', c.aberta || c.achada);
+    c.botao.classList.toggle('achada', c.achada);
+    let rotulo = `Carta ${i + 1}, fechada`;
+    if (c.achada) rotulo = `Carta ${i + 1}: ${c.nome}, par encontrado`;
+    else if (c.aberta) rotulo = `Carta ${i + 1}: ${c.nome}`;
+    c.botao.setAttribute('aria-label', rotulo);
+  }
+
+  function desvirarErro() {
+    if (!pendente) return;
+    clearTimeout(pendente.timer);
+    for (const i of [pendente.a, pendente.b]) {
+      cartas[i].aberta = false;
+      cartas[i].botao.classList.remove('errou');
+      atualizarCarta(i);
+    }
+    pendente = null;
+  }
+
+  function virar(i) {
+    const c = cartas[i];
+    if (c.aberta || c.achada) return;
+    if (pendente) desvirarErro();          // clicar em outra carta adianta a desvirada
+    if (!inicio) iniciarRelogio();
+
+    c.aberta = true;
+    atualizarCarta(i);
+
+    if (primeira === null) {
+      primeira = i;
+      return;
+    }
+
+    const a = primeira;
+    primeira = null;
+    jogadas++;
+    el.jogadas.textContent = jogadas;
+
+    if (cartas[a].id === c.id) {
+      cartas[a].achada = c.achada = true;
+      atualizarCarta(a);
+      atualizarCarta(i);
+      paresAchados++;
+      el.aviso.textContent = `Par encontrado: ${c.nome}.`;
+      if (paresAchados === PARES_POR_NIVEL[nivel]) vencer();
+    } else {
+      cartas[a].botao.classList.add('errou');
+      c.botao.classList.add('errou');
+      el.aviso.textContent = `${cartas[a].nome} e ${c.nome} não formam par.`;
+      pendente = { a, b: i, timer: setTimeout(desvirarErro, ESPERA_ERRO_MS) };
+    }
+  }
+
+  function vencer() {
+    pararRelogio();
+    const tempo = segundosDecorridos();
+    el.tempo.textContent = formatarTempo(tempo);
+
+    const antigo = lerRecorde();
+    const melhorou = !antigo || jogadas < antigo.jogadas ||
+      (jogadas === antigo.jogadas && tempo < antigo.tempo);
+    if (melhorou) salvarRecorde({ jogadas, tempo });
+    mostrarRecorde();
+
+    el.resumo.innerHTML =
+      `Todos os pares em <strong>${jogadas} jogadas</strong> e <strong>${formatarTempo(tempo)}</strong>.`;
+    el.textoRecorde.className = melhorou ? 'recorde-novo' : '';
+    el.textoRecorde.textContent = melhorou
+      ? '⭐ Novo recorde!'
+      : `Recorde: ${antigo.jogadas} jogadas · ${formatarTempo(antigo.tempo)}`;
+
+    // espera a última carta terminar de virar antes de abrir a tela de vitória
+    setTimeout(() => el.vitoria.showModal(), 650);
+  }
+
+  function novoJogo() {
+    if (pendente) clearTimeout(pendente.timer);
+    pararRelogio();
+    if (el.vitoria.open) el.vitoria.close();
+
+    primeira = null;
+    pendente = null;
+    jogadas = 0;
+    paresAchados = 0;
+    inicio = 0;
+    el.jogadas.textContent = '0';
+    el.tempo.textContent = '00:00';
+    el.aviso.textContent = '';
+    mostrarRecorde();
+
+    const escolhidos = embaralhar(ANIMAIS).slice(0, PARES_POR_NIVEL[nivel]);
+    const baralho = embaralhar(escolhidos.flatMap(([emoji, nome], id) => [
+      { id, emoji, nome }, { id, emoji, nome },
+    ]));
+
+    el.tabuleiro.dataset.nivel = nivel;
+    el.tabuleiro.textContent = '';
+    cartas = baralho.map((dados, i) => {
+      const botao = document.createElement('button');
+      botao.type = 'button';
+      botao.className = 'carta';
+      botao.dataset.indice = i;
+      botao.innerHTML =
+        '<span class="carta-miolo">' +
+          '<span class="face verso" aria-hidden="true"></span>' +
+          `<span class="face frente" aria-hidden="true">${dados.emoji}</span>` +
+        '</span>';
+      el.tabuleiro.appendChild(botao);
+      return { ...dados, aberta: false, achada: false, botao };
+    });
+    cartas.forEach((_, i) => atualizarCarta(i));
+  }
+
+  // --- Eventos ---
+  el.tabuleiro.addEventListener('click', (e) => {
+    const botao = e.target.closest('.carta');
+    if (botao) virar(Number(botao.dataset.indice));
+  });
+
+  // setas do teclado andam pelo tabuleiro
+  el.tabuleiro.addEventListener('keydown', (e) => {
+    const botao = e.target.closest('.carta');
+    if (!botao) return;
+    const cols = Number(getComputedStyle(el.tabuleiro).getPropertyValue('--cols'));
+    const passo = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -cols, ArrowDown: cols }[e.key];
+    if (!passo) return;
+    const destino = cartas[Number(botao.dataset.indice) + passo];
+    if (destino) {
+      e.preventDefault();
+      destino.botao.focus();
+    }
+  });
+
+  el.niveis.forEach((b) => {
+    b.addEventListener('click', () => {
+      nivel = b.dataset.nivel;
+      el.niveis.forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
+      novoJogo();
+    });
+  });
+
+  el.novo.addEventListener('click', novoJogo);
+  el.deNovo.addEventListener('click', novoJogo);
+
+  novoJogo();
+})();
+</script>
+</body>
+</html>
