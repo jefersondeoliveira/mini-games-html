@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Treino de Lash Design</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Jost:wght@400;500&display=swap">
+<style>
+/* layout: jogo de uma tela, pensado para celular deitado. Esquerda = o olho da cliente; direita = instrução e ferramentas. */
+:root{
+  color-scheme:dark;
+  --bg:#14100E; --surface:#221A16; --raise:#2E241F; --line:#57483F;
+  --text:#F6F0EA; --muted:#D2C4B9; --accent:#E7CABF; --good:#A6D8AE; --bad:#F2A892; --warn:#EBCB8B;
+  --display:'Cormorant Garamond',Georgia,serif; --body:'Jost',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:15px;line-height:1.45;display:flex;flex-direction:column;overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none}
+header{display:flex;align-items:center;gap:12px;padding:8px 16px;border-bottom:1px solid var(--line);flex:none}
+header h1{font-family:var(--display);font-weight:600;font-size:20px;letter-spacing:.01em;white-space:nowrap}
+#dots{display:flex;gap:5px;flex:1;min-width:0}
+#dots i{height:5px;flex:1;max-width:38px;border-radius:3px;background:var(--line)}
+#dots i.done{background:var(--accent)}#dots i.now{background:var(--text)}
+#score{font-variant-numeric:tabular-nums;font-weight:500;white-space:nowrap}
+#tip{display:none;background:var(--raise);color:var(--warn);padding:6px 16px;font-size:13px;flex:none}
+main{flex:1;min-height:0;display:flex;gap:12px;padding:12px 16px}
+#stage{flex:1.25;min-width:0;display:flex;align-items:center;justify-content:center;background:var(--surface);border-radius:14px;overflow:hidden;position:relative}
+#stage svg{width:100%;height:100%;touch-action:none;display:block}
+#panel{flex:1;min-width:0;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding-right:2px}
+@media (orientation:portrait){
+  #tip{display:block}
+  main{flex-direction:column}
+  #stage{flex:none;height:38%}
+}
+h2{font-family:var(--display);font-weight:500;font-size:26px;line-height:1.05;text-wrap:balance}
+h2 em{color:var(--accent)}
+.eye{font-size:11px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+p{color:var(--muted)}
+p b{color:var(--text);font-weight:500}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+button{font:inherit;color:var(--text);background:var(--raise);border:1px solid var(--line);border-radius:10px;padding:9px 12px;min-height:44px;cursor:pointer;text-align:left}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.on{border-color:var(--accent);background:#4A3830}
+button.pri{background:var(--accent);color:#14100E;border-color:var(--accent);font-weight:500;text-align:center}
+button:disabled{opacity:.45;cursor:default}
+button.ok{border-color:var(--good);color:var(--good)}
+button.no{border-color:var(--bad);color:var(--bad)}
+button.chip{min-width:48px;text-align:center;padding:8px 6px;font-variant-numeric:tabular-nums}
+button.card{flex:1 1 130px}
+button.card small{display:block;color:var(--muted);font-size:12px}
+#msg{min-height:22px;font-size:14px}
+#msg.good{color:var(--good)}#msg.bad{color:var(--bad)}#msg.warn{color:var(--warn)}
+.bar{height:16px;border-radius:8px;background:var(--raise);border:1px solid var(--line);position:relative;overflow:hidden}
+.bar .fill{position:absolute;inset:0 auto 0 0;background:var(--accent);width:0}
+.bar .zone{position:absolute;top:0;bottom:0;background:rgba(166,216,174,.35);border-left:1px solid var(--good);border-right:1px solid var(--good)}
+.bar .mark{position:absolute;top:-2px;bottom:-2px;width:4px;margin-left:-2px;background:var(--text);border-radius:2px}
+.lab{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+td{padding:5px 0;border-bottom:1px solid var(--line)}
+td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+ul{padding-left:18px;color:var(--muted);font-size:14px}
+.big{font-family:var(--display);font-size:54px;font-weight:600;line-height:1;color:var(--accent)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header><h1>Treino de Lash</h1><div id="dots"></div><div id="score">0 pts</div></header>
+<div id="tip">Vire o celular de lado para ter mais espaço.</div>
+<main>
+  <div id="stage"><svg id="svg" viewBox="0 0 400 250" role="img" aria-label="Olho da cliente"></svg></div>
+  <div id="panel"></div>
+</main>
+<script>
+/* ===== CONFIGURAÇÃO: ajuste aqui os mapas e curvaturas para a técnica do studio ===== */
+const ESTILOS=[
+ {id:'clean-marrom',nome:'Volume Clean Marrom',cat:'Natural',cor:'#6A4129',curv:'C',mapa:[8,9,10,11,11,10,9]},
+ {id:'clean-black', nome:'Volume Clean Black', cat:'Natural',cor:'#120D0B',curv:'C',mapa:[8,9,10,11,11,10,9]},
+ {id:'felina',      nome:'Volume Felina',      cat:'Intermediário',cor:'#120D0B',curv:'D',mapa:[8,9,10,11,12,13,12]},
+ {id:'fox',         nome:'Volume Fox',         cat:'Intermediário',cor:'#120D0B',curv:'L',mapa:[8,9,10,11,12,13,14]},
+];
+const CLIENTES=[
+ {nome:'Marina',pele:'#E6BFA2',sombra:'#CFA283',desc:'Primeira vez com extensão'},
+ {nome:'Luíza', pele:'#C4906E',sombra:'#A97756',desc:'Faz manutenção todo mês'},
+ {nome:'Renata',pele:'#F0D2BC',sombra:'#DDB79C',desc:'Quer um olhar para o dia a dia'},
+];
+const SITUACOES=[
+ {fala:'“Uso lentes de contato, estou com elas agora.”',certa:1,por:'Lentes devem sair antes: o olho fica fechado por muito tempo e os vapores do adesivo irritam mais com a lente.'},
+ {fala:'“Meu olho está vermelho e coçando há dois dias.”',certa:2,por:'Olho irritado ou com suspeita de infecção não recebe extensão. Remarque e oriente a procurar um médico.'},
+ {fala:'“Nunca tive problema nos olhos, não uso lentes e não tenho alergias.”',certa:0,por:'Sem contraindicação: pode seguir, explicando o procedimento antes de começar.'},
+ {fala:'“Da última vez, em outro lugar, tive uma reação forte à cola.”',certa:2,por:'Histórico de reação ao adesivo: não aplique hoje. Remarque e combine um teste de contato antes.'},
+];
+const OPCOES_ANAMNESE=['Seguir com o atendimento','Pedir para retirar as lentes e seguir','Não aplicar hoje e remarcar'];
+const N=24, FIOS_POR_GOTA=8;
+
+/* ===== estado ===== */
+let S;
+const $=q=>document.querySelector(q), panel=$('#panel'), svg=$('#svg');
+const ETAPAS=['Cliente','Anamnese','Higiene','Isolamento','Mapping','Adesivo','Aplicação','Revisão','Finalização','Resultado'];
+function novo(){
+  const bebes=new Set(); while(bebes.size<3) bebes.add(2+Math.floor(Math.random()*(N-4)));
+  S={etapa:0,cli:null,est:null,sit:SITUACOES[Math.floor(Math.random()*SITUACOES.length)],
+     pts:{},erros:[],pad:false,fita:false,primer:new Set(),mapa:Array(7).fill(null),mapaVisivel:false,
+     bebes,ext:{},sel:null,stick:new Set(),ultimos:[],usosGota:0,aberto:false};
+  ir(0);
+}
+const totalPts=()=>Object.values(S.pts).reduce((a,b)=>a+b,0);
+function pontuar(nome,v){S.pts[nome]=Math.max(0,Math.round(v));$('#score').textContent=totalPts()+' pts'}
+function erro(etapa,txt){S.erros.push([etapa,txt])}
+function msg(t,k=''){const m=$('#msg');if(m){m.textContent=t;m.className=k}}
+function ir(i){S.etapa=i;$('#dots').innerHTML=ETAPAS.map((_,k)=>`<i class="${k<i?'done':k==i?'now':''}"></i>`).join('');
+  $('#score').textContent=totalPts()+' pts';panel.scrollTop=0;TELAS[i]();desenhar()}
+const proxima=()=>ir(S.etapa+1);
+const cab=(sub,tit,txt)=>`<div class="eye">${S.etapa+1} de ${ETAPAS.length} · ${sub}</div><h2>${tit}</h2>${txt?`<p>${txt}</p>`:''}`;
+const btnProx=(t='Continuar')=>`<button class="pri" id="prox">${t}</button>`;
+
+/* ===== geometria do olho (fechado, visto de cima) ===== */
+const geo=i=>{const u=(i+.5)/N,x=50+300*u,y=96+160*u*(1-u),a=(90-(u-.5)*84)*Math.PI/180;return{u,x,y,dx:Math.cos(a),dy:Math.sin(a),zona:Math.min(6,Math.floor(u*7))}};
+const fio=(g,len,curl)=>{const ex=g.x+g.dx*len,ey=g.y+g.dy*len,cx=g.x+g.dx*len*.55+g.dy*curl*(g.u<.5?1:-1)*.0,cy=g.y+g.dy*len*.55+curl;return`M${g.x.toFixed(1)} ${g.y.toFixed(1)} Q${cx.toFixed(1)} ${cy.toFixed(1)} ${ex.toFixed(1)} ${ey.toFixed(1)}`};
+const linha=(off)=>{let d='';for(let k=0;k<=30;k++){const u=k/30,x=50+300*u,y=96+160*u*(1-u)+off;d+=(k?'L':'M')+x.toFixed(1)+' '+y.toFixed(1)}return d};
+function desenhar(){
+  const c=S.cli||CLIENTES[0], e=S.est;
+  if(S.aberto){desenharAberto(c,e);return}
+  let h=`<rect width="400" height="250" fill="${c.pele}"/>`;
+  h+=`<path d="M40 42 Q200 -6 372 46 Q200 14 40 42Z" fill="#3A2A22" opacity=".8"/>`;            // sobrancelha
+  h+=`<path d="M46 86 Q200 34 356 88" fill="none" stroke="${c.sombra}" stroke-width="3"/>`;      // dobra da pálpebra
+  if(S.pad){h+=`<path d="${linha(5)} L356 150 Q200 232 44 150Z" fill="#F7F3EE" stroke="#D9D0C6"/>`;
+    if(S.mapaVisivel||S.etapa>=6)for(let z=0;z<7;z++){const u=(z+.5)/7,x=50+300*u,y=96+160*u*(1-u)+62;
+      h+=`<line x1="${50+300*z/7}" y1="${96+160*(z/7)*(1-z/7)+12}" x2="${50+300*z/7-(3.5-z)*3}" y2="${96+160*(z/7)*(1-z/7)+48}" stroke="#B9A999" stroke-width=".8"/>`;
+      h+=`<text x="${x}" y="${y}" text-anchor="middle" font-size="13" font-family="Jost,sans-serif" fill="#5A4A40">${S.mapa[z]??'?'}</text>`}
+  } else for(let i=0;i<N;i+=2){const g=geo(i);h+=`<path d="${fio({...g,y:g.y+3},9,2)}" stroke="#4A382E" stroke-width=".8" fill="none" opacity=".6"/>`} // cílios inferiores
+  if(S.fita){h+=`<rect x="30" y="118" width="46" height="22" rx="3" fill="#fff" opacity=".8" transform="rotate(-24 53 129)"/><rect x="324" y="118" width="46" height="22" rx="3" fill="#fff" opacity=".8" transform="rotate(24 347 129)"/>`}
+  h+=`<path d="${linha(0)}" fill="none" stroke="#4A382E" stroke-width="2"/>`;
+  for(let i=0;i<N;i++){const g=geo(i),b=S.bebes.has(i),pr=S.primer.has(g.zona);
+    h+=`<path d="${fio(g,b?7:15,2)}" stroke="${pr?'#2A1D17':'#5A4338'}" stroke-width="${b?.8:1.2}" fill="none" stroke-linecap="round"/>`;
+    const x=S.ext[i]; if(x){let d=fio(g,x.mm*3.1,4);
+      const par=[...S.stick].find(p=>p.split('-').map(Number).includes(i));
+      if(par){const [a,bb]=par.split('-').map(Number),ga=geo(a),gb=geo(bb),la=(S.ext[a]?.mm||10)*3.1;
+        const tx=(ga.x+ga.dx*la+gb.x+gb.dx*la)/2,ty=(ga.y+ga.dy*la+gb.y+gb.dy*la)/2;d=`M${g.x} ${g.y} Q${(g.x+tx)/2} ${(g.y+ty)/2+4} ${tx} ${ty}`}
+      h+=`<path d="${d}" stroke="${e.cor}" stroke-width="2" fill="none" stroke-linecap="round"/>`}
+    if(S.sel===i)h+=`<circle cx="${g.x+g.dx*8}" cy="${g.y+g.dy*8}" r="9" fill="none" stroke="#fff" stroke-width="1.5"/><path d="M${g.x-9} ${g.y-26} L${g.x-2} ${g.y+4} M${g.x+9} ${g.y-26} L${g.x+2} ${g.y+4}" stroke="#C9CED3" stroke-width="2" stroke-linecap="round"/>`;
+  }
+  svg.innerHTML=h;
+}
+function desenharAberto(c,e){
+  let h=`<rect width="400" height="250" fill="${c.pele}"/><path d="M40 52 Q200 4 372 56 Q200 26 40 52Z" fill="#3A2A22" opacity=".8"/>`;
+  h+=`<path d="M60 160 Q200 86 340 160 Q200 214 60 160Z" fill="#FBF7F3"/><circle cx="200" cy="158" r="34" fill="#6B4A32"/><circle cx="200" cy="158" r="15" fill="#120D0B"/><circle cx="211" cy="147" r="5" fill="#fff"/>`;
+  h+=`<path d="M60 160 Q200 86 340 160" fill="none" stroke="#3A2A22" stroke-width="3"/>`;
+  for(let i=0;i<N;i++){const u=(i+.5)/N,x=60+280*u,y=160-148*u*(1-u),a=(-90+(u-.5)*100)*Math.PI/180,x2=S.ext[i];
+    const len=x2?x2.mm*3.3:(S.bebes.has(i)?7:14),ex=x+Math.cos(a)*len,ey=y+Math.sin(a)*len;
+    h+=`<path d="M${x} ${y} Q${x+Math.cos(a)*len*.5+(u-.5)*-10} ${y+Math.sin(a)*len*.5+6} ${ex} ${ey}" stroke="${x2?e.cor:'#5A4338'}" stroke-width="${x2?2:1.1}" fill="none" stroke-linecap="round"/>`}
+  svg.innerHTML=h;
+}
+function pontoSvg(ev){const r=svg.getBoundingClientRect(),s=Math.min(r.width/400,r.height/250),ox=(r.width-400*s)/2,oy=(r.height-250*s)/2;return{x:(ev.clientX-r.left-ox)/s,y:(ev.clientY-r.top-oy)/s}}
+function fioMaisPerto(p){let best=null,bd=18;for(let i=0;i<N;i++){const g=geo(i),mx=g.x+g.dx*12,my=g.y+g.dy*12,d=Math.hypot(p.x-mx,p.y-my);if(d<bd){bd=d;best=i}}return best}
+let aoTocar=null, aoArrastar=null;
+svg.addEventListener('pointerdown',ev=>{if(aoTocar)aoTocar(pontoSvg(ev));if(aoArrastar){svg.setPointerCapture(ev.pointerId);aoArrastar(pontoSvg(ev))}});
+svg.addEventListener('pointermove',ev=>{if(aoArrastar&&ev.buttons)aoArrastar(pontoSvg(ev))});
+
+/* ===== mini-jogo de ordem ===== */
+function ordem(sub,tit,txt,itens,nome,depois){
+  const emb=itens.map((t,i)=>[t,i]).sort(()=>Math.random()-.5);let prox=0,falhas=0;
+  panel.innerHTML=cab(sub,tit,txt)+`<div class="row" id="ops">${emb.map(([t,i])=>`<button class="card" data-i="${i}">${t}</button>`).join('')}</div><div id="msg" aria-live="polite"></div><div id="fim"></div>`;
+  panel.querySelectorAll('#ops button').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;
+    if(i===prox){b.classList.add('ok');b.disabled=true;b.textContent=(prox+1)+'. '+b.textContent;prox++;msg('Isso.','good');
+      if(prox===itens.length){pontuar(nome,100-25*falhas);depois()}}
+    else{falhas++;erro(nome,'Ordem trocada: “'+itens[i]+'” antes de “'+itens[prox]+'”.');msg('Ainda não. Pense no que vem antes.','bad')}});
+}
+
+/* ===== telas ===== */
+const TELAS=[
+// 0 cliente e estilo
+()=>{aoTocar=aoArrastar=null;
+  panel.innerHTML=cab('Cliente','Quem você vai <em>atender?</em>','Escolha a cliente e o efeito que ela pediu.')+
+  `<div class="row" id="cl">${CLIENTES.map((c,i)=>`<button class="card" data-i="${i}">${c.nome}<small>${c.desc}</small></button>`).join('')}</div>
+   <div class="eye">Efeito</div><div class="row" id="es">${ESTILOS.map((e,i)=>`<button class="card" data-i="${i}">${e.nome}<small>${e.cat} · curvatura ${e.curv}</small></button>`).join('')}</div>
+   <button class="pri" id="prox" disabled>Começar atendimento</button>
+   <p style="font-size:12px">Simulador de treino. Não substitui curso nem prática supervisionada.</p>`;
+  const up=()=>{$('#prox').disabled=!(S.cli&&S.est)};
+  panel.querySelectorAll('#cl button').forEach(b=>b.onclick=()=>{S.cli=CLIENTES[b.dataset.i];panel.querySelectorAll('#cl button').forEach(x=>x.classList.toggle('on',x===b));desenhar();up()});
+  panel.querySelectorAll('#es button').forEach(b=>b.onclick=()=>{S.est=ESTILOS[b.dataset.i];panel.querySelectorAll('#es button').forEach(x=>x.classList.toggle('on',x===b));up()});
+  $('#prox').onclick=proxima},
+// 1 anamnese
+()=>{panel.innerHTML=cab('Anamnese',`${S.cli.nome} <em>conta:</em>`,`<b>${S.sit.fala}</b><br>Você perguntou sobre lentes, alergias, irritação nos olhos e procedimentos recentes. O que você faz?`)+
+  `<div class="row" id="ops">${OPCOES_ANAMNESE.map((t,i)=>`<button class="card" data-i="${i}">${t}</button>`).join('')}</div><div id="msg" aria-live="polite"></div><div id="fim"></div>`;
+  panel.querySelectorAll('#ops button').forEach(b=>b.onclick=()=>{const ok=+b.dataset.i===S.sit.certa;
+    panel.querySelectorAll('#ops button').forEach(x=>{x.disabled=true;if(+x.dataset.i===S.sit.certa)x.classList.add('ok')});
+    if(!ok){b.classList.add('no');erro('Anamnese',S.sit.por)}
+    pontuar('Anamnese',ok?100:0);msg((ok?'Certo. ':'Não era isso. ')+S.sit.por,ok?'good':'bad');
+    $('#fim').innerHTML=`<p>${S.sit.certa?'Para o treino continuar, a cliente voltou outro dia, sem lentes e sem sintomas.':''}</p>`+btnProx();$('#prox').onclick=proxima})},
+// 2 higiene
+()=>ordem('Higiene','Biossegurança e <em>limpeza</em>','Toque nos passos na ordem certa.',
+  ['Lavar as mãos','Colocar máscara e luvas','Higienizar as pinças','Lavar os cílios com shampoo próprio','Secar bem os fios'],'Higiene',
+  ()=>{msg('Fios limpos e secos: a cola adere melhor.','good');$('#fim').innerHTML=btnProx();$('#prox').onclick=proxima}),
+// 3 isolamento
+()=>{const FER=[['Pad de gel','pad'],['Fita micropore','fita'],['Primer','primer'],['Óleo demaquilante','oleo'],['Removedor em gel','rem']].sort(()=>Math.random()-.5);
+  const seq=['pad','fita','primer'];let passo=0,falhas=0;
+  panel.innerHTML=cab('Isolamento','Isolar e <em>preparar</em>','Com a cliente de olhos fechados, escolha a ferramenta de cada passo.')+
+  `<div class="row" id="ops">${FER.map(([t,k])=>`<button class="card" data-k="${k}">${t}</button>`).join('')}</div><div id="msg" aria-live="polite"></div><div id="fim"></div>`;
+  msg('Primeiro, proteja os cílios inferiores.');
+  panel.querySelectorAll('#ops button').forEach(b=>b.onclick=()=>{const k=b.dataset.k;
+    if(k==='oleo'){falhas++;erro('Isolamento','Óleo perto dos fios impede a cola de aderir.');return msg('Óleo impede a cola de aderir. Não use.','bad')}
+    if(k==='rem'){falhas++;erro('Isolamento','Removedor serve para tirar extensões, não para preparar.');return msg('Removedor é para tirar extensões.','bad')}
+    if(k!==seq[passo]){falhas++;erro('Isolamento','Ordem do isolamento: pad, fita, primer.');return msg('Ainda não é a hora dessa.','bad')}
+    b.classList.add('ok');b.disabled=true;
+    if(k==='pad'){S.pad=true;passo++;msg('Pad no lugar, sem encostar na linha d’água. Agora prenda o que escapou.','good')}
+    else if(k==='fita'){S.fita=true;passo++;msg('Fita presa. Agora desengordure os fios naturais.','good')}
+    else{msg('Passe o dedo sobre os fios, do canto interno ao externo.','warn');
+      aoArrastar=p=>{if(p.y>80&&p.y<170){S.primer.add(Math.max(0,Math.min(6,Math.floor((p.x-50)/300*7))));desenhar();
+        if(S.primer.size===7){aoArrastar=null;pontuar('Isolamento',100-20*falhas);msg('Primer em todos os fios.','good');$('#fim').innerHTML=btnProx();$('#prox').onclick=proxima}}}}
+    desenhar()})},
+// 4 mapping
+()=>{let z=0,curv=null,dica=false;S.mapaVisivel=true;
+  const tela=()=>{panel.innerHTML=cab('Mapping',`Mapa do <em>${S.est.nome.replace('Volume ','')}</em>`,'Zona 1 é o canto interno, zona 7 o externo. Toque na zona e escolha o tamanho em mm.')+
+   `<div class="row">${S.mapa.map((m,i)=>`<button class="chip ${i===z?'on':''}" data-z="${i}">Z${i+1}<br>${m??'–'}</button>`).join('')}</div>
+    <div class="row">${[7,8,9,10,11,12,13,14].map(m=>`<button class="chip" data-m="${m}">${m}</button>`).join('')}</div>
+    <div class="eye">Curvatura</div><div class="row">${['C','D','L'].map(c=>`<button class="chip ${curv===c?'on':''}" data-c="${c}">${c}</button>`).join('')}</div>
+    <div class="row"><button id="dica">${dica?'Mapa: '+S.est.mapa.join(' · '):'Ver o mapa do efeito (−30 pts)'}</button><button class="pri" id="conf" ${S.mapa.includes(null)||!curv?'disabled':''}>Conferir</button></div><div id="msg" aria-live="polite"></div><div id="fim"></div>`;
+   panel.querySelectorAll('[data-z]').forEach(b=>b.onclick=()=>{z=+b.dataset.z;tela()});
+   panel.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{S.mapa[z]=+b.dataset.m;z=Math.min(6,z+1);desenhar();tela()});
+   panel.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{curv=b.dataset.c;tela()});
+   $('#dica').onclick=()=>{dica=true;tela()};
+   $('#conf').onclick=()=>{const ac=S.mapa.filter((m,i)=>m===S.est.mapa[i]).length,cOk=curv===S.est.curv;
+     if(ac<7)erro('Mapping',`Mapa do ${S.est.nome}: ${S.est.mapa.join(' · ')}.`);if(!cOk)erro('Mapping',`Curvatura do ${S.est.nome}: ${S.est.curv}.`);
+     pontuar('Mapping',ac/7*80+(cOk?20:0)-(dica?30:0));S.mapa=[...S.est.mapa];desenhar();
+     panel.querySelectorAll('button').forEach(b=>b.disabled=true);
+     msg(`${ac} de 7 zonas certas${cOk?', curvatura certa':', curvatura errada'}. O mapa correto ficou no pad: ${S.est.mapa.join(' · ')}.`,ac===7&&cOk?'good':'warn');
+     $('#fim').innerHTML=btnProx();$('#prox').onclick=proxima}};
+  tela()},
+// 5 adesivo
+()=>{let agit=0,segurando=false,feito=false,raf;
+  panel.innerHTML=cab('Adesivo','Preparar a <em>cola</em>','Segure para agitar o frasco. Depois pingue a gota na pedra de jade.')+
+  `<div class="bar"><div class="fill" id="ag"></div></div><div class="row"><button id="agitar" class="card">Segurar para agitar</button><button id="pingar" class="card">Pingar a gota</button></div>
+   <div id="msg" aria-live="polite"></div><div id="quiz"></div><div id="fim"></div>`;
+  const loop=()=>{if(segurando&&agit<1){agit=Math.min(1,agit+1/150);$('#ag').style.width=agit*100+'%';if(agit>=1)msg('Bem misturado. Pode pingar.','good')}raf=requestAnimationFrame(loop)};loop();
+  const a=$('#agitar');a.onpointerdown=()=>segurando=true;a.onpointerup=a.onpointerleave=a.onpointercancel=()=>segurando=false;
+  $('#pingar').onclick=()=>{if(feito)return;let p=60;
+    if(agit<1){p=20;erro('Adesivo','Adesivo mal agitado separa os componentes e segura menos.');msg('Você pingou sem agitar o suficiente. A retenção cai.','bad')}else msg('Gota na pedra de jade, que mantém a cola fresca.','good');
+    feito=true;cancelAnimationFrame(raf);$('#agitar').disabled=$('#pingar').disabled=true;
+    $('#quiz').innerHTML=`<p><b>De quanto em quanto tempo você troca a gota?</b></p><div class="row">${['A cada 15 a 20 minutos','Só quando o frasco acabar','Uma vez por atendimento'].map((t,i)=>`<button class="card" data-i="${i}">${t}</button>`).join('')}</div>`;
+    panel.querySelectorAll('#quiz button').forEach(b=>b.onclick=()=>{const ok=b.dataset.i==='0';panel.querySelectorAll('#quiz button').forEach(x=>{x.disabled=true;if(x.dataset.i==='0')x.classList.add('ok')});
+      if(!ok){b.classList.add('no');erro('Adesivo','A gota engrossa em contato com o ar: troque a cada 15 a 20 minutos.')}
+      pontuar('Adesivo',p+(ok?40:0));msg(ok?'Isso. A gota engrossa com o ar e perde a fixação.':'A gota engrossa com o ar. Troque a cada 15 a 20 minutos.',ok?'good':'bad');
+      $('#fim').innerHTML=btnProx('Começar a aplicação');$('#prox').onclick=proxima})}},
+// 6 aplicação
+()=>{const tam=[...new Set(S.est.mapa)].sort((a,b)=>a-b);let mm=null,cola=null,segurando=false,nivel=0,pos=0,raf,soma=0,t0=performance.now();
+  const total=N-S.bebes.size, feitos=()=>Object.keys(S.ext).length;
+  panel.innerHTML=`<div class="eye">7 de ${ETAPAS.length} · Aplicação · isole, escolha o tamanho, molhe, cole</div>
+   <div class="row" id="tams" style="gap:6px">${tam.map(m=>`<button class="chip" style="min-width:42px;flex:1" data-m="${m}">${m}</button>`).join('')}</div>
+   <div><div class="lab"><span>Cola no fio</span><span>ideal no verde</span></div><div class="bar"><div class="zone" style="left:35%;width:30%"></div><div class="fill" id="nv" style="opacity:.8"></div></div></div>
+   <div><div class="lab"><span>Pálpebra</span><span>ideal: 0,5 a 1 mm</span><span>3 mm</span></div><div class="bar"><div class="zone" style="left:16.6%;width:16.7%"></div><div class="mark" id="mk"></div></div></div>
+   <div class="row" style="flex-wrap:nowrap"><button id="molhar" style="flex:1.3;text-align:center">Segurar: molhar</button><button class="pri" id="colar" style="flex:1">Colar</button><button id="gota" style="flex:1;text-align:center">Nova gota</button></div>
+   <div class="lab"><span id="prog"></span><span id="gt"></span></div><div id="msg" aria-live="polite"></div>`;
+  const info=()=>{$('#prog').textContent=`${feitos()} de ${total} fios`;$('#gt').textContent=S.usosGota>=FIOS_POR_GOTA?'Gota espessa: troque':`Gota: ${S.usosGota} de ${FIOS_POR_GOTA} usos`;$('#gt').style.color=S.usosGota>=FIOS_POR_GOTA?'var(--bad)':''};
+  info();msg('Toque num fio natural para isolar com a pinça.');
+  panel.querySelectorAll('#tams button').forEach(b=>b.onclick=()=>{mm=+b.dataset.m;panel.querySelectorAll('#tams button').forEach(x=>x.classList.toggle('on',x===b))});
+  aoTocar=p=>{if(S.etapa!==6)return;const i=fioMaisPerto(p);if(i==null)return;
+    if(S.ext[i])return msg('Esse fio já tem extensão.','warn');
+    if(S.bebes.has(i)){soma-=3;erro('Aplicação','Fio bebê não aguenta o peso da extensão: pule e deixe crescer.');return msg('Esse é um fio bebê, curto e fino. Não aplique nele.','bad')}
+    S.sel=i;cola=null;nivel=0;$('#nv').style.width='0';desenhar();msg(`Fio isolado na zona ${geo(i).zona+1}. Escolha o tamanho e molhe na cola.`)};
+  const loop=()=>{if(S.etapa!==6)return;const t=(performance.now()-t0)/1000;
+    if(segurando){nivel=Math.min(1,nivel+1/95);$('#nv').style.width=nivel*100+'%'}
+    pos=(Math.sin(t*2.6)+1)/2;$('#mk').style.left=pos*100+'%';raf=requestAnimationFrame(loop)};loop();
+  const m=$('#molhar');
+  m.onpointerdown=()=>{if(S.sel==null)return msg('Isole um fio natural primeiro.','warn');if(mm==null)return msg('Escolha o tamanho da extensão.','warn');nivel=0;segurando=true};
+  m.onpointerup=m.onpointerleave=m.onpointercancel=()=>{if(!segurando)return;segurando=false;cola={nivel,velha:S.usosGota>=FIOS_POR_GOTA};S.usosGota++;info();
+    msg(nivel<.35?'Pouca cola no fio.':nivel>.65?'Cola demais no fio.':'Quantidade boa de cola. Agora cole.',nivel<.35||nivel>.65?'warn':'good')};
+  $('#gota').onclick=()=>{S.usosGota=0;info();msg('Gota nova na pedra.','good')};
+  $('#colar').onclick=()=>{if(S.sel==null)return msg('Isole um fio natural primeiro.','warn');if(!cola)return msg('Molhe a base da extensão na cola antes.','warn');
+    const i=S.sel,g=geo(i),dist=pos*3,prob=[];let p=10;
+    if(mm!==S.est.mapa[g.zona]){p-=4;prob.push(`tamanho errado para a zona ${g.zona+1} (era ${S.est.mapa[g.zona]} mm)`);erro('Aplicação',`Zona ${g.zona+1} pede ${S.est.mapa[g.zona]} mm, você usou ${mm} mm.`)}
+    if(cola.nivel<.35){p-=3;prob.push('pouca cola, o fio solta cedo');erro('Aplicação','Pouca cola: a extensão solta em poucos dias.')}
+    if(cola.nivel>.65){p-=3;prob.push('cola demais, grudou no vizinho');erro('Aplicação','Excesso de cola forma bolinha e gruda fios vizinhos.')}
+    if(cola.velha){p-=3;prob.push('gota espessa');erro('Aplicação','Gota velha e espessa: troque antes de continuar.')}
+    if(dist<.5){p-=3;prob.push('encostou na pele');erro('Aplicação','Extensão encostada na pálpebra irrita e pode causar alergia. Mantenha 0,5 a 1 mm.')}
+    else if(dist>1){p-=dist>1.6?3:1;prob.push('longe da raiz');erro('Aplicação','Extensão longe da raiz fica pesada e torta. Mantenha 0,5 a 1 mm.')}
+    const viz=S.ultimos.slice(-2).find(j=>Math.abs(j-i)===1);
+    if(viz!=null){p-=3;prob.push('colou ao lado de um fio ainda úmido');erro('Aplicação','Alterne as áreas: colar ao lado de um fio recém-colado gruda os dois.')}
+    S.ext[i]={mm};if(viz!=null||cola.nivel>.65){const j=viz!=null?viz:(S.ext[i-1]?i-1:S.ext[i+1]?i+1:null);if(j!=null&&S.ext[j]&&![...S.stick].some(s=>s.split('-').map(Number).some(k=>k===i||k===j)))S.stick.add(Math.min(i,j)+'-'+Math.max(i,j))}
+    S.ultimos.push(i);S.sel=null;cola=null;nivel=0;$('#nv').style.width='0';soma+=Math.max(0,p);desenhar();info();
+    msg(prob.length?'Colado, mas: '+prob.join('; ')+'.':'Perfeito: um fio natural, uma extensão, distância certa.',prob.length?'bad':'good');
+    if(feitos()===total){cancelAnimationFrame(raf);aoTocar=null;pontuar('Aplicação',soma/(total*10)*300);setTimeout(proxima,900)}}},
+// 7 revisão
+()=>{S.sel=null;if(!S.stick.size){const livres=[];for(let i=0;i<N-1;i++)if(S.ext[i]&&S.ext[i+1])livres.push(i);const i=livres[Math.floor(Math.random()*livres.length)];if(i!=null)S.stick.add(i+'-'+(i+1))}
+  const ini=S.stick.size;let dica=false;
+  panel.innerHTML=cab('Revisão','Procurar fios <em>colados</em>','Mesmo num bom trabalho, alguns fios grudam. Olhe com calma e toque em cada par colado para separar com as pinças.')+
+  `<div class="row"><button id="dica" class="card">Não estou achando (−20 pts)</button><button class="pri" id="conf">Terminei a revisão</button></div><div id="msg" aria-live="polite"></div>`;
+  aoTocar=p=>{const i=fioMaisPerto(p);if(i==null)return;const par=[...S.stick].find(s=>s.split('-').map(Number).includes(i));
+    if(par){S.stick.delete(par);desenhar();msg('Separados. Cada extensão no seu fio natural.','good')}else msg('Esses estão soltos. Procure pontas que se encontram.','warn')};
+  $('#dica').onclick=()=>{dica=true;const s=[...S.stick][0];msg(s?`Olhe a zona ${geo(+s.split('-')[0]).zona+1}.`:'Não há mais fios colados.','warn')};
+  $('#conf').onclick=()=>{const r=S.stick.size;if(r)erro('Revisão',`${r} par(es) de fios ficaram colados: isso puxa o fio natural no crescimento e pode arrancá-lo.`);
+    pontuar('Revisão',100-(ini?r/ini*100:0)-(dica?20:0));S.stick.clear();aoTocar=null;proxima()}},
+// 8 finalização
+()=>ordem('Finalização','Fechar o <em>atendimento</em>','Toque nos passos na ordem certa.',
+  ['Ventilar para curar a cola','Remover fita e pads com delicadeza','Pedir para abrir os olhos devagar','Pentear e mostrar no espelho'],'Finalização',
+  ()=>{S.pad=S.fita=false;S.aberto=true;desenhar();
+    const AF=[['Não molhar os cílios nas primeiras 24 horas',1],['Lavar todos os dias com shampoo próprio e escovinha',1],['Evitar produtos oleosos na região dos olhos',1],['Não dormir de bruços',1],['Usar rímel à prova d’água para dar volume',0],['Puxar os fios que estiverem soltando',0],['Usar curvex para manter a curvatura',0]].sort(()=>Math.random()-.5);
+    $('#fim').innerHTML=`<p><b>Quais orientações você passa para a cliente?</b> Marque todas as corretas.</p><div class="row" id="af">${AF.map(([t,c])=>`<button class="card" data-c="${c}">${t}</button>`).join('')}</div><button class="pri" id="conf">Conferir orientações</button>`;
+    panel.querySelectorAll('#af button').forEach(b=>b.onclick=()=>b.classList.toggle('on'));
+    $('#conf').onclick=()=>{let ok=0;panel.querySelectorAll('#af button').forEach(b=>{const certo=(b.dataset.c==='1')===b.classList.contains('on');if(certo)ok++;else erro('Orientações',b.dataset.c==='1'?'Faltou orientar: '+b.textContent+'.':'Orientação errada: '+b.textContent+'.');b.classList.add(b.dataset.c==='1'?'ok':'no');b.disabled=true});
+      pontuar('Orientações',ok/AF.length*100);$('#conf').outerHTML=btnProx('Ver o resultado');$('#prox').onclick=proxima}}),
+// 9 resultado
+()=>{S.aberto=true;const max={Anamnese:100,Higiene:100,Isolamento:100,Mapping:100,Adesivo:100,'Aplicação':300,'Revisão':100,'Finalização':100,'Orientações':100},tot=totalPts(),mx=Object.values(max).reduce((a,b)=>a+b,0),pc=Math.round(tot/mx*100);
+  const un=[...new Set(S.erros.map(e=>e[0]+': '+e[1]))];
+  panel.innerHTML=`<div class="eye">Resultado · ${S.est.nome} em ${S.cli.nome}</div><div class="big">${pc}%</div>
+   <h2>${pc>=90?'Atendimento <em>impecável</em>':pc>=70?'Bom <em>atendimento</em>':'Vale <em>treinar de novo</em>'}</h2>
+   <table>${Object.keys(max).map(k=>`<tr><td>${k}</td><td>${S.pts[k]??0} / ${max[k]}</td></tr>`).join('')}</table>
+   ${un.length?`<div class="eye">O que revisar</div><ul>${un.slice(0,12).map(t=>`<li>${t}</li>`).join('')}</ul>`:'<p>Nenhum erro registrado.</p>'}
+   <button class="pri" id="prox">Novo atendimento</button>`;
+  $('#prox').onclick=novo},
+];
+novo();
+</script>
+</body>
+</html>
