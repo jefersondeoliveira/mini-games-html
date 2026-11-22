@@ -62,7 +62,7 @@ ul b{color:var(--bad);font-weight:500}
 </head>
 <body>
 <svg id="svg" viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Olho da cliente"></svg>
-<div class="hud" id="top"><div class="pill" id="pedido"></div><button id="cheia" style="min-height:34px;padding:4px 10px;border-radius:999px;font-size:12px">Tela cheia</button><div class="pill" id="caixa">Caixa: R$ 0</div></div>
+<div class="hud" id="top"><div class="pill" id="pedido"></div><button id="cheia" style="min-height:34px;padding:4px 10px;border-radius:999px;font-size:12px">Tela cheia</button><button id="dica" style="min-height:34px;padding:4px 12px;border-radius:999px;font-size:12px;border-color:var(--warn);color:var(--warn)">Dica</button><div class="pill" id="caixa">Caixa: R$ 0</div></div>
 <div class="hud" id="msg" aria-live="polite"></div>
 <div class="hud" id="bottom"><button class="pri" id="abrir">Ferramentas<small id="atual">nenhuma na mão</small></button><div id="ctx"></div><button id="jade" aria-label="Pedra de jade: segure para molhar o fio na cola"></button></div>
 <div class="hud" id="drawer"><div class="head"><div class="eye">Bancada: toque para pegar</div><button id="fechar" style="min-height:36px">Fechar</button></div><div id="tools"></div></div>
@@ -229,6 +229,33 @@ function colar(ax){const i=C.sel,z=zonaDe(i),viz=C.ult.slice(-2).find(j=>Math.ab
   C.ult.push(i);C.sel=null;C.dip=null;desenhar();
   const falt=[...Array(N).keys()].filter(k=>!C.bebes.has(k)&&!C.fora.has(k)&&!C.ext[k]&&!C.velho[k]).length;
   msg((x.perto?'Colou encostado na pálpebra. ':x.longe?'Colou longe da raiz. ':'Fio colado. ')+`Faltam ${falt}.`+(C.cola.usos>=GOTA?' A gota engrossou: pingue outra.':''),x.perto||x.longe||C.cola.usos>=GOTA?'warn':'good')}
+function dica(){ if(C.fase==='fim')return 'Leia a avaliação da cliente e chame a próxima.';
+  if(C.cena==='irritado')return 'O olho dela está vermelho e coçando. Não aplique nada: remarque a cliente.';
+  if(C.fase!=='atendimento')return 'O olho dela não mostra nenhum problema. Deite a cliente para começar.';
+  const falt=[...Array(N).keys()].filter(k=>!C.bebes.has(k)&&!C.fora.has(k)&&!C.ext[k]&&!C.velho[k]);
+  if(C.maq.size)return 'Ainda há maquiagem. Pegue o "Demaquilante sem óleo" e passe em todo o olho.';
+  const vz=[...new Set(Object.keys(C.velho).map(k=>zonaDe(+k)))];
+  if(vz.some(z=>!C.gel[z]))return 'Há extensões antigas. Pegue o "Removedor em gel" e passe sobre elas.';
+  if(vz.length)return 'Espere o removedor agir alguns segundos e passe o "Microbrush" para retirar as extensões antigas.';
+  if(C.oleo||C.lavado.size<7)return 'Pegue "Shampoo e pincel" e lave todo o olho, de um canto ao outro.';
+  if(C.molhado)return 'Os fios estão molhados. Pegue o "Ventilador" e passe até secar tudo.';
+  if(!C.pad)return 'Proteja os cílios de baixo: pegue o "Pad de gel".';
+  if(!C.fita)return 'Prenda os fios que escaparam: pegue a "Fita micropore".';
+  if(C.primer.size<7)return 'Pegue o "Primer" e passe em todos os fios naturais.';
+  if(falt.length){
+    if(!C.cola)return 'Prepare a cola: pegue o "Adesivo", segure para agitar o frasco e pingue a gota.';
+    if(C.cola.usos>=GOTA||!C.cola.agitada)return 'A gota não está boa. Pegue o "Adesivo", agite bem e pingue uma gota nova.';
+    if(tool!=='aplicar')return 'Pegue "Pinças e fios" para começar a colar.';
+    if(C.sel==null)return `Toque num fio natural para isolar. Faltam ${falt.length}. Pule os fios bebê, curtos e finos, e não cole dois vizinhos em seguida.`;
+    const m=C.est.mapa[zonaDe(C.sel)]; if(C.mm!==m)return `Esse fio está na zona ${zonaDe(C.sel)+1}: escolha o tamanho ${m} mm.`;
+    if(!C.dip)return 'Segure na pedra de jade por cerca de meio segundo para molhar a base da extensão.';
+    return 'Toque no fio isolado, em cima da marca verde, para colar.'}
+  if(C.stick.size)return 'Há fios colados um no outro. Pegue "Pinça: separar" e toque onde as pontas se encontram.';
+  if(novos().length&&C.cura.size<7)return 'Cure a cola: pegue o "Ventilador" e passe sobre todos os fios.';
+  if(C.pad)return 'Pegue "Tirar pads e fita".';
+  if(novos().length&&C.escova.size<7)return 'Finalize: pegue a "Escovinha" e penteie todos os fios.';
+  return 'Está tudo pronto. Pegue "Entregar o espelho".'}
+$('#dica').onclick=()=>{msg(dica(),'warn')};
 function loop(){
   if(hold==='agit'){C.agit=Math.min(1,C.agit+1/140);const a=$('#agitar');if(a){a.style.setProperty('--a',C.agit);if(C.agit>=1)a.textContent='Bem agitado'}}
   if(hold==='dip')jade.style.setProperty('--n',Math.min(1,(performance.now()-tDip)/1500));
