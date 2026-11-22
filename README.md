@@ -11,6 +11,7 @@ Joguinhos feitos em HTML, CSS e JavaScript puro. Rodam direto no navegador, sem 
 | 🍦 **Sorveteria Arco-Íris** | [Jogar agora](https://jefersondeoliveira.github.io/mini-games-html/sorveteria/) | [`sorveteria/`](sorveteria/) |
 | 🃏 **Jogo da Memória** | [Jogar agora](https://jefersondeoliveira.github.io/mini-games-html/memoria/) | [`memoria/`](memoria/) |
 | 🧪 **LabRemember** | [Jogar agora](https://jefersondeoliveira.github.io/mini-games-html/labremember/) | [`labremember/`](labremember/) |
+| 👁️ **Treino de Lash** | [Jogar agora](https://jefersondeoliveira.github.io/mini-games-html/lash/) | [`lash/`](lash/) |
 
 ### 🍦 Sorveteria Arco-Íris
 
@@ -43,6 +44,15 @@ Um jogo para decorar as regras de cada laboratório. Você mesmo cadastra as reg
   - **Limite:** qual é o mínimo ou o máximo daquele item, entre 4 alternativas.
 - As regras que você mais erra aparecem mais vezes.
 - Tudo fica salvo **só no navegador** do aparelho. Use **Exportar backup** e **Importar backup** para guardar uma cópia ou levar as regras para outro aparelho.
+
+### 👁️ Treino de Lash
+
+Um simulador para treinar o atendimento de extensão de cílios, do começo ao fim:
+
+- **10 etapas pontuadas:** cliente e efeito, anamnese, higiene, isolamento, mapping, adesivo, aplicação fio a fio, revisão dos fios colados, finalização e resultado.
+- **Aplicação:** isole o fio natural, escolha o tamanho da zona, molhe na cola na quantidade certa e cole entre 0,5 e 1 mm da pálpebra. Fios bebê não recebem extensão e a gota precisa ser trocada.
+- No fim aparece a **nota por etapa** e a lista do que revisar.
+- Feito para o **celular deitado**. Os mapas e as curvaturas de cada efeito ficam no bloco `ESTILOS`, no topo do código.
 
 ## Como rodar localmente
 
