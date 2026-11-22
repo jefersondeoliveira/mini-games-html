@@ -12,6 +12,7 @@ Joguinhos feitos em HTML, CSS e JavaScript puro. Rodam direto no navegador, sem 
 | 🃏 **Jogo da Memória** | [Jogar agora](https://jefersondeoliveira.github.io/mini-games-html/memoria/) | [`memoria/`](memoria/) |
 | 🧪 **LabRemember** | [Jogar agora](https://jefersondeoliveira.github.io/mini-games-html/labremember/) | [`labremember/`](labremember/) |
 | 👁️ **Treino de Lash** | [Jogar agora](https://jefersondeoliveira.github.io/mini-games-html/lash/) | [`lash/`](lash/) |
+| 💖 **Lash Studio** | [Jogar agora](https://jefersondeoliveira.github.io/mini-games-html/lash-studio/) | [`lash-studio/`](lash-studio/) |
 
 ### 🍦 Sorveteria Arco-Íris
 
@@ -54,6 +55,16 @@ Um quiz para treinar as decisões do atendimento de extensão de cílios:
 - **Ordem certa:** monte a sequência dos passos.
 - São **15 perguntas sorteadas** por rodada. O jogo só mostra o que está certo ou errado **no fim**, com a explicação de cada resposta.
 - Feito para o **celular deitado**. As perguntas ficam nos blocos `CASOS`, `PRODUTOS` e `ORDENS`, no topo do código.
+
+### 💖 Lash Studio
+
+Um simulador do atendimento de extensão de cílios, sem roteiro:
+
+- A cada cliente o olho chega de um jeito, sorteado: **limpo**, **com maquiagem**, **com extensões antigas para tirar**, **para manutenção** ou **irritado** (caso em que o certo é remarcar).
+- A **bancada** tem 18 ferramentas, inclusive as que não devem ser usadas. Você escolhe a ferramenta e usa no olho: demaquilar, lavar, secar, remover, isolar com pad e fita, passar primer, preparar a cola e colar fio a fio no tamanho do mapa.
+- Ao **entregar o espelho**, a cliente avalia de 1 a 5 estrelas: paga o valor cheio com gorjeta se ficou perfeito, paga menos ou reclama dizendo o que deu errado.
+- O **caixa do dia** soma os atendimentos e o recorde fica salvo no aparelho.
+- Feito para o **celular deitado**. Os mapas de cada efeito e os preços ficam nos blocos `ESTILOS` e `PRECO`, no topo do código.
 
 ## Como rodar localmente
 

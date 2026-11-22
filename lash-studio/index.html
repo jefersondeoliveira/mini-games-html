@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lash Studio</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Jost:wght@400;500&display=swap">
+<style>
+/* layout: celular deitado. Esquerda = o olho da cliente e o que a ferramenta ativa pede; direita = bancada de ferramentas. */
+:root{
+  color-scheme:dark;
+  --bg:#14100E; --surface:#221A16; --raise:#2E241F; --line:#57483F;
+  --text:#F6F0EA; --muted:#D2C4B9; --accent:#E7CABF; --good:#A6D8AE; --bad:#F2A892; --warn:#EBCB8B;
+  --display:'Cormorant Garamond',Georgia,serif; --body:'Jost',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:14px;line-height:1.4;display:flex;flex-direction:column;overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none}
+header{display:flex;align-items:center;gap:12px;padding:6px 16px;border-bottom:1px solid var(--line);flex:none}
+header h1{font-family:var(--display);font-weight:600;font-size:20px;white-space:nowrap}
+#pedido{flex:1;min-width:0;color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#pedido b{color:var(--text);font-weight:500}
+#caixa{font-variant-numeric:tabular-nums;font-weight:500;white-space:nowrap;color:var(--accent)}
+#tip{display:none;background:var(--raise);color:var(--warn);padding:5px 16px;font-size:13px;flex:none}
+main{flex:1;min-height:0;display:flex;gap:10px;padding:10px 16px}
+#left{flex:1.35;min-width:0;display:flex;flex-direction:column;gap:6px}
+#stage{flex:1;min-height:0;background:var(--surface);border-radius:14px;overflow:hidden}
+#stage svg{width:100%;height:100%;display:block;touch-action:none}
+#msg{min-height:20px;font-size:13.5px;color:var(--muted)}
+#msg.good{color:var(--good)}#msg.bad{color:var(--bad)}#msg.warn{color:var(--warn)}
+#ctx{display:flex;flex-direction:column;gap:5px;flex:none}
+#right{flex:1;min-width:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+#tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+@media (orientation:portrait){#tip{display:block}main{flex-direction:column}#left{flex:1.2}}
+button{font:inherit;color:var(--text);background:var(--raise);border:1px solid var(--line);border-radius:9px;padding:6px 8px;min-height:40px;cursor:pointer;text-align:center;line-height:1.15}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.on{border-color:var(--accent);background:#4A3830;color:var(--accent)}
+button.pri{background:var(--accent);color:#14100E;border-color:var(--accent);font-weight:500}
+#tools button{font-size:12.5px}
+.row{display:flex;gap:6px;flex-wrap:wrap}
+.row>button{flex:1}
+.chip{min-width:36px;padding:4px 2px;min-height:34px;font-variant-numeric:tabular-nums}
+.bar{height:13px;border-radius:7px;background:var(--raise);border:1px solid var(--line);position:relative;overflow:hidden}
+.bar .fill{position:absolute;inset:0 auto 0 0;background:var(--accent);width:0;opacity:.85}
+.bar .zone{position:absolute;top:0;bottom:0;background:rgba(166,216,174,.35);border-left:1px solid var(--good);border-right:1px solid var(--good)}
+.bar .mark{position:absolute;top:-2px;bottom:-2px;width:4px;margin-left:-2px;background:var(--text);border-radius:2px}
+.lab{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+h2{font-family:var(--display);font-weight:500;font-size:25px;line-height:1.08;text-wrap:balance}
+h2 em{color:var(--accent)}
+.eye{font-size:11px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+p{color:var(--muted)}p b{color:var(--text);font-weight:500}
+.fala{background:var(--surface);border-radius:12px;padding:10px 12px;font-size:15px;color:var(--text)}
+.stars{font-size:22px;letter-spacing:3px;color:var(--warn)}
+.big{font-family:var(--display);font-size:44px;font-weight:600;line-height:1;color:var(--accent)}
+ul{padding-left:18px;color:var(--muted);font-size:13.5px;display:flex;flex-direction:column;gap:4px}
+ul b{color:var(--bad);font-weight:500}
+</style>
+</head>
+<body>
+<header><h1>Lash Studio</h1><div id="pedido"></div><div id="caixa">Caixa: R$ 0</div></header>
+<div id="tip">Vire o celular de lado para ter mais espaço.</div>
+<main>
+  <div id="left"><div id="stage"><svg id="svg" viewBox="0 0 400 200" role="img" aria-label="Olho da cliente"></svg></div><div id="msg" aria-live="polite"></div><div id="ctx"></div></div>
+  <div id="right"></div>
+</main>
+<script>
+/* ===== CONFIGURAÇÃO ===== */
+const ESTILOS=[
+ {nome:'Volume Clean Marrom',cor:'#6A4129',mapa:[8,9,10,11,11,10,9]},
+ {nome:'Volume Clean Black', cor:'#120D0B',mapa:[8,9,10,11,11,10,9]},
+ {nome:'Volume Felina',      cor:'#120D0B',mapa:[8,9,10,11,12,13,12]},
+ {nome:'Volume Fox',         cor:'#120D0B',mapa:[8,9,10,11,12,13,14]},
+];
+const PRECO={novo:100,manut:80,remocao:20,gorjeta:20};
+const NOMES=['Marina','Luíza','Renata','Camila','Bianca','Helena','Júlia','Sofia','Patrícia','Aline'];
+const PELES=[['#E6BFA2','#CFA283'],['#C4906E','#A97756'],['#F0D2BC','#DDB79C'],['#A9744F','#8E5E3E']];
+const CENAS=[
+ {id:'limpa', fala:e=>`Oi! É minha primeira vez. Quero o ${e.nome}.`},
+ {id:'maquiagem', fala:e=>`Vim direto do trabalho, estou de rímel. Quero o ${e.nome}.`},
+ {id:'troca', fala:e=>`Fiz em outro lugar e ficou horrível. Tira tudo e faz o ${e.nome}?`},
+ {id:'manut', fala:e=>`Vim fazer a manutenção do meu ${e.nome}. Uns fios cresceram e ficaram tortos.`},
+ {id:'irritado', fala:e=>`Meu olho está vermelho e coçando desde ontem, mas quero o ${e.nome} mesmo assim.`},
+];
+const FERR=[['ficha','Ficha da cliente'],['remarcar','Remarcar'],['demaq','Demaquilante sem óleo'],['oleo','Óleo demaquilante'],['shampoo','Shampoo e pincel'],['vento','Ventilador'],
+ ['quente','Secador quente'],['removedor','Removedor em gel'],['micro','Microbrush'],['pad','Pad de gel'],['fita','Fita micropore'],['primer','Primer'],
+ ['cola','Adesivo'],['aplicar','Pinças e fios'],['separar','Pinça: separar'],['tirarpad','Tirar pads e fita'],['escova','Escovinha'],['espelho','Entregar o espelho']];
+const N=18, GOTA=8;
+
+/* ===== estado ===== */
+const $=q=>document.querySelector(q), svg=$('#svg'), ctx=$('#ctx'), right=$('#right');
+let C, caixa=0, atend=0, tool=null, raf, hold=null, t0=performance.now();
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+const zonaDe=i=>Math.min(6,Math.floor((i+.5)/N*7));
+function msg(t,k=''){const m=$('#msg');m.textContent=t;m.className=k}
+function novaCliente(){
+  const est=rnd(ESTILOS), cena=rnd(CENAS), pele=rnd(PELES), bebes=new Set();
+  while(bebes.size<2) bebes.add(2+Math.floor(Math.random()*(N-4)));
+  C={nome:rnd(NOMES),est,cena:cena.id,fala:cena.fala(est),pele,bebes,aberto:true,fase:'chegada',
+     maq:new Set(cena.id==='maquiagem'?[0,1,2,3,4,5,6]:[]),velho:{},ext:{},fora:new Set(),dano:0,
+     lavado:new Set(),seco:new Set(),molhado:false,oleo:false,gel:{},pad:false,fita:false,primer:new Set(),
+     cola:null,agit:0,sel:null,mm:null,dip:null,stick:new Set(),ult:[],cura:new Set(),escova:new Set(),quente:false,padNoEspelho:false,log:[]};
+  for(let i=0;i<N;i++){ if(bebes.has(i))continue;
+    if(cena.id==='troca') C.velho[i]={mm:9+Math.floor(Math.random()*5),torto:(Math.random()-.5)*50};
+    if(cena.id==='manut'){const r=Math.random(); if(r<.55)C.ext[i]={mm:est.mapa[zonaDe(i)],antigo:true}; else if(r<.75)C.velho[i]={mm:est.mapa[zonaDe(i)],torto:(Math.random()-.5)*60}}}
+  if(cena.id==='manut'&&!Object.keys(C.velho).length){const i=[...Array(N).keys()].find(k=>!bebes.has(k)&&!C.ext[k]);C.velho[i]={mm:10,torto:30}}
+  tool=null;telaChegada();desenhar();
+}
+/* ===== desenho ===== */
+const gF=i=>{const u=(i+.5)/N,a=(90-(u-.5)*84)*Math.PI/180;return{u,x:40+320*u,y:70+150*u*(1-u),dx:Math.cos(a),dy:Math.sin(a)}};
+const gA=i=>{const u=(i+.5)/N,a=(-90+(u-.5)*100)*Math.PI/180;return{u,x:50+300*u,y:128-132*u*(1-u),dx:Math.cos(a),dy:Math.sin(a)}};
+const rot=(g,deg)=>{const r=deg*Math.PI/180,c=Math.cos(r),s=Math.sin(r);return{...g,dx:g.dx*c-g.dy*s,dy:g.dx*s+g.dy*c}};
+const traco=(g,len,ini=0,curl=3)=>{const sx=g.x+g.dx*ini,sy=g.y+g.dy*ini,ex=g.x+g.dx*(ini+len),ey=g.y+g.dy*(ini+len);return`M${sx.toFixed(1)} ${sy.toFixed(1)} Q${((sx+ex)/2).toFixed(1)} ${((sy+ey)/2+curl).toFixed(1)} ${ex.toFixed(1)} ${ey.toFixed(1)}`};
+const linhaF=off=>{let d='';for(let k=0;k<=30;k++){const u=k/30;d+=(k?'L':'M')+(40+320*u).toFixed(1)+' '+(70+150*u*(1-u)+off).toFixed(1)}return d};
+function fios(g_,sc){let h='';const e=C.est;
+  for(let i=0;i<N;i++){const g=g_(i),b=C.bebes.has(i),z=zonaDe(i);
+    if(C.fora.has(i)){h+=`<circle cx="${g.x}" cy="${g.y}" r="2" fill="#C0392B"/>`;continue}
+    const m=C.maq.has(z);
+    h+=`<path d="${traco(g,(b?7:15)*sc)}" stroke="${m?'#0B0807':'#5A4338'}" stroke-width="${m?2.6:b?.8:1.2}" fill="none" stroke-linecap="round"/>`;
+    const v=C.velho[i]; if(v)h+=`<path d="${traco(rot(g,v.torto),v.mm*3*sc,5)}" stroke="#2A2220" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".9"/>`;
+    const x=C.ext[i]; if(x){let d=traco(g,x.mm*3*sc,0,4);
+      const par=[...C.stick].find(p=>p.split('-').map(Number).includes(i));
+      if(par){const [a,bb]=par.split('-').map(Number),ga=g_(a),gb=g_(bb),la=(C.ext[a]?.mm||10)*3*sc,tx=(ga.x+ga.dx*la+gb.x+gb.dx*la)/2,ty=(ga.y+ga.dy*la+gb.y+gb.dy*la)/2;d=`M${g.x} ${g.y} Q${(g.x+tx)/2} ${(g.y+ty)/2+3} ${tx} ${ty}`}
+      h+=`<path d="${d}" stroke="${e.cor}" stroke-width="2" fill="none" stroke-linecap="round"/>`}
+    if(C.sel===i&&!C.aberto)h+=`<circle cx="${g.x+g.dx*8}" cy="${g.y+g.dy*8}" r="9" fill="none" stroke="#fff" stroke-width="1.5"/><path d="M${g.x-8} ${g.y-24} L${g.x-2} ${g.y+3} M${g.x+8} ${g.y-24} L${g.x+2} ${g.y+3}" stroke="#C9CED3" stroke-width="2" stroke-linecap="round"/>`}
+  return h}
+function desenhar(){const [pele,sombra]=C.pele;let h=`<rect width="400" height="200" fill="${pele}"/>`;
+  if(C.aberto){const verm=C.cena==='irritado'||C.piorou;
+    h+=`<path d="M36 40 Q200 -4 372 44 Q200 16 36 40Z" fill="#3A2A22" opacity=".8"/>`;
+    h+=`<path d="M50 128 Q200 62 350 128 Q200 176 50 128Z" fill="${verm?'#F3C9C2':'#FBF7F3'}"/>`;
+    if(verm)h+=`<path d="M70 128 Q110 118 150 126 M330 128 Q295 120 260 127 M90 140 Q120 146 150 142" stroke="#C0392B" stroke-width="1" fill="none"/><ellipse cx="62" cy="134" rx="7" ry="4" fill="#E9E2A8" opacity=".9"/>`;
+    h+=`<circle cx="200" cy="126" r="30" fill="#6B4A32"/><circle cx="200" cy="126" r="13" fill="#120D0B"/><circle cx="210" cy="116" r="4.5" fill="#fff"/>`;
+    if(C.maq.size)h+=`<path d="M50 128 Q200 62 350 128" fill="none" stroke="#0B0807" stroke-width="7" opacity=".55"/>`;
+    h+=`<path d="M50 128 Q200 62 350 128" fill="none" stroke="#3A2A22" stroke-width="3"/>`+fios(gA,1.1);
+    if(C.padNoEspelho)h+=`<path d="M56 140 Q200 196 344 140 L350 168 Q200 214 50 168Z" fill="#F7F3EE" stroke="#D9D0C6"/>`;
+  } else {
+    h+=`<path d="M30 28 Q200 -14 376 32 Q200 6 30 28Z" fill="#3A2A22" opacity=".8"/><path d="M38 62 Q200 14 362 64" fill="none" stroke="${sombra}" stroke-width="3"/>`;
+    if(C.pad){h+=`<path d="${linhaF(5)} L366 122 Q200 204 34 122Z" fill="#F7F3EE" stroke="#D9D0C6"/>`;
+      for(let z=0;z<7;z++){const u=(z+.5)/7;h+=`<text x="${40+320*u}" y="${70+150*u*(1-u)+56}" text-anchor="middle" font-size="12" font-family="Jost,sans-serif" fill="#6A5A50">${C.est.mapa[z]}</text>`}}
+    else for(let i=0;i<N;i+=2){const g=gF(i);h+=`<path d="${traco({...g,y:g.y+3},8,0,2)}" stroke="#4A382E" stroke-width=".8" fill="none" opacity=".6"/>`}
+    if(C.fita)h+=`<rect x="14" y="92" width="46" height="20" rx="3" fill="#fff" opacity=".8" transform="rotate(-24 37 102)"/><rect x="340" y="92" width="46" height="20" rx="3" fill="#fff" opacity=".8" transform="rotate(24 363 102)"/>`;
+    for(let z=0;z<7;z++){const u=(z+.5)/7,x=40+320*u,y=70+150*u*(1-u);
+      if(C.maq.has(z))h+=`<ellipse cx="${x}" cy="${y+3}" rx="24" ry="6" fill="#0B0807" opacity=".4"/>`;
+      if(C.gel[z])h+=`<ellipse cx="${x}" cy="${y+10}" rx="22" ry="8" fill="#E88BB0" opacity=".55"/>`;
+      if(C.molhado&&C.lavado.has(z)&&!C.seco.has(z))h+=`<circle cx="${x-8}" cy="${y+14}" r="2.5" fill="#9FD3F0"/><circle cx="${x+9}" cy="${y+9}" r="2" fill="#9FD3F0"/><circle cx="${x}" cy="${y+20}" r="1.8" fill="#9FD3F0"/>`}
+    h+=`<path d="${linhaF(0)}" fill="none" stroke="#4A382E" stroke-width="2"/>`+fios(gF,1);
+    h+=`<circle cx="372" cy="176" r="18" fill="#7FA38C" stroke="#5E7F6A" stroke-width="2"/>`+(C.cola?`<circle cx="372" cy="176" r="${C.cola.usos>=GOTA?7:5}" fill="${C.cola.usos>=GOTA?'#555':'#0B0807'}"/>`:'')+`<text x="372" y="154" text-anchor="middle" font-size="8" font-family="Jost,sans-serif" fill="#3A2A22">jade</text>`;
+  }
+  svg.innerHTML=h}
+function pt(ev){const r=svg.getBoundingClientRect(),s=Math.min(r.width/400,r.height/200),ox=(r.width-400*s)/2,oy=(r.height-200*s)/2;return{x:(ev.clientX-r.left-ox)/s,y:(ev.clientY-r.top-oy)/s}}
+const zonaPt=p=>Math.max(0,Math.min(6,Math.floor((p.x-40)/320*7)));
+function perto(p){let b=null,bd=20;for(let i=0;i<N;i++){const g=gF(i),d=Math.hypot(p.x-(g.x+g.dx*14),p.y-(g.y+g.dy*14));if(d<bd){bd=d;b=i}}return b}
+
+/* ===== uso das ferramentas no olho ===== */
+function usar(p,toque){ if(C.aberto||C.fase!=='atendimento')return; const z=zonaPt(p), noOlho=p.y>40&&p.y<190;
+  if(!noOlho)return;
+  switch(tool){
+   case 'demaq': if(C.maq.delete(z))msg('Saindo a maquiagem. Passe em todo o olho.','good'); break;
+   case 'oleo': C.maq.delete(z);C.oleo=true;C.lavado.clear();msg('O óleo tira a maquiagem, mas deixa os fios engordurados.','warn'); break;
+   case 'shampoo': C.lavado.add(z);C.seco.delete(z);C.molhado=true;if(C.lavado.size===7){C.oleo=false;msg('Tudo lavado. Agora seque.','good')}else msg('Lavando. Passe em todo o olho.'); break;
+   case 'vento': if(C.molhado){C.seco.add(z);if(C.seco.size===7){C.molhado=false;msg('Fios secos.','good')}} else if(novos().length){C.cura.add(z);if(C.cura.size===7)msg('Cola curada.','good')} else msg('Não há nada para secar agora.'); break;
+   case 'quente': C.quente=true;C.seco.add(z);if(C.seco.size===7)C.molhado=false;msg('Ar quente perto do olho arde e amolece a cola.','bad'); break;
+   case 'removedor': if(!C.gel[z]){C.gel[z]=performance.now();msg('Removedor aplicado. Espere agir alguns segundos antes de retirar.','warn')} break;
+   case 'micro': {let saiu=0,cedo=false;for(let i=0;i<N;i++)if(zonaDe(i)===z&&C.velho[i]){if(C.gel[z]&&performance.now()-C.gel[z]>2500){delete C.velho[i];saiu++}else cedo=true}
+     if(saiu){msg('As extensões antigas deslizaram para fora.','good');if(![...Array(N).keys()].some(i=>zonaDe(i)===z&&C.velho[i])){delete C.gel[z];C.lavado.delete(z)}}
+     else if(cedo)msg(C.gel[z]?'O removedor ainda está agindo. Espere mais um pouco.':'Sem removedor, a extensão não solta.','warn'); break}
+   case 'primer': C.primer.add(z);msg(C.primer.size===7?'Primer em todos os fios.':'Passando o primer.',C.primer.size===7?'good':''); break;
+   case 'escova': C.escova.add(z);msg(C.escova.size===7?'Fios penteados e alinhados.':'Penteando.',C.escova.size===7?'good':''); break;
+   case 'separar': if(!toque)break;{const i=perto(p);if(i==null)break;const par=[...C.stick].find(s=>s.split('-').map(Number).includes(i));
+     if(par){C.stick.delete(par);msg('Fios separados.','good')}
+     else if(C.velho[i]){delete C.velho[i];C.fora.add(i);C.dano++;msg('Você puxou a extensão sem removedor e arrancou o fio natural junto.','bad')}
+     else msg('Esses fios estão soltos.'); break}
+   case 'aplicar': if(!toque)break;{const i=perto(p);if(i==null)break;
+     if(C.fora.has(i))return msg('Não há fio natural aqui.','warn'); if(C.ext[i])return msg('Esse fio já tem extensão.','warn'); if(C.velho[i])return msg('Tem uma extensão antiga nesse fio. Remova antes.','warn');
+     C.sel=i;C.dip=null;$('#nv')&&($('#nv').style.width='0');msg(`Fio isolado na zona ${zonaDe(i)+1} (${C.est.mapa[zonaDe(i)]} mm no mapa).`); break}
+  } desenhar()}
+svg.addEventListener('pointerdown',ev=>{svg.setPointerCapture(ev.pointerId);usar(pt(ev),true)});
+svg.addEventListener('pointermove',ev=>{if(ev.buttons)usar(pt(ev),false)});
+const novos=()=>Object.values(C.ext).filter(x=>!x.antigo);
+
+/* ===== bancada ===== */
+function bancada(){right.innerHTML=`<div id="tools">${FERR.map(([k,t])=>`<button data-k="${k}" class="${tool===k?'on':''}">${t}</button>`).join('')}</div>`;
+  right.querySelectorAll('button').forEach(b=>b.onclick=()=>pegar(b.dataset.k))}
+function pegar(k){tool=k;C.sel=null;ctx.innerHTML='';
+  if(k==='ficha')msg(`${C.nome} pediu ${C.est.nome}. Mapa do canto interno ao externo: ${C.est.mapa.join(' · ')} mm.`);
+  else if(k==='remarcar'){return fim(true)}
+  else if(k==='pad'){C.pad=true;msg('Pad de gel sobre os cílios inferiores.','good')}
+  else if(k==='fita'){if(!C.pad)msg('Coloque o pad antes da fita.','warn');else{C.fita=true;msg('Fita prendendo os fios que escaparam.','good')}}
+  else if(k==='tirarpad'){C.pad=C.fita=false;msg('Pads e fita retirados com delicadeza.','good')}
+  else if(k==='espelho'){return fim(false)}
+  else if(k==='cola'){ctx.innerHTML=`<div class="bar"><div class="fill" id="ag" style="width:${C.agit*100}%"></div></div><div class="row"><button id="agitar">Segurar: agitar o frasco</button><button id="pingar">Pingar a gota na pedra</button></div>`;
+    const a=$('#agitar');a.onpointerdown=()=>hold='agit';a.onpointerup=a.onpointerleave=a.onpointercancel=()=>hold=null;
+    $('#pingar').onclick=()=>{C.cola={agitada:C.agit>=1,usos:0};C.agit=0;$('#ag').style.width='0';desenhar();msg(C.cola.agitada?'Gota nova na pedra de jade.':'Gota na pedra, mas o frasco não foi bem agitado.',C.cola.agitada?'good':'warn')};
+    msg('Agite bem o frasco antes de pingar.')}
+  else if(k==='aplicar'){const tam=[...new Set(C.est.mapa)].sort((a,b)=>a-b);
+    ctx.innerHTML=`<div class="row" style="flex-wrap:nowrap">${tam.map(m=>`<button class="chip ${C.mm===m?'on':''}" data-m="${m}">${m}</button>`).join('')}</div>
+     <div><div class="lab"><span>Cola no fio</span><span>Distância da pálpebra: ideal 0,5 a 1 mm</span></div><div class="row" style="flex-wrap:nowrap;align-items:center"><div class="bar" style="flex:1"><div class="zone" style="left:35%;width:30%"></div><div class="fill" id="nv"></div></div><div class="bar" style="flex:1"><div class="zone" style="left:16.6%;width:16.7%"></div><div class="mark" id="mk"></div></div></div></div>
+     <div class="row"><button id="molhar">Segurar: molhar na cola</button><button class="pri" id="colar">Colar</button></div>`;
+    ctx.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{C.mm=+b.dataset.m;ctx.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x===b))});
+    const m=$('#molhar');
+    m.onpointerdown=()=>{if(!C.cola)return msg('Não há gota de cola na pedra.','warn');if(C.sel==null)return msg('Isole um fio natural: toque nele.','warn');if(C.mm==null)return msg('Escolha o tamanho do fio.','warn');C.nivel=0;hold='dip'};
+    m.onpointerup=m.onpointerleave=m.onpointercancel=()=>{if(hold!=='dip')return;hold=null;C.dip={nivel:C.nivel,ruim:C.cola.usos>=GOTA||!C.cola.agitada};C.cola.usos++;desenhar();
+      msg(C.nivel<.35?'Pouca cola no fio.':C.nivel>.65?'Cola demais no fio.':'Boa quantidade. Agora cole.',C.nivel<.35||C.nivel>.65?'warn':'good')};
+    $('#colar').onclick=colar;
+    msg('Toque num fio natural para isolar. Depois escolha o tamanho, molhe e cole.')}
+  else msg({demaq:'Passe o demaquilante sobre os cílios.',oleo:'Passe o óleo sobre os cílios.',shampoo:'Passe o pincel com shampoo em todo o olho.',vento:'Passe o ventilador sobre os fios.',quente:'Passe o secador sobre os fios.',removedor:'Passe o removedor sobre as extensões que vão sair.',micro:'Passe o microbrush para retirar o que o removedor soltou.',primer:'Passe o primer nos fios naturais.',escova:'Penteie os fios.',separar:'Toque no fio que você quer soltar.'}[k]||'');
+  bancada();desenhar()}
+function colar(){if(C.sel==null)return msg('Isole um fio natural: toque nele.','warn');if(!C.dip)return msg('Molhe a base da extensão na cola antes.','warn');
+  const i=C.sel,z=zonaDe(i),dist=C.pos*3,viz=C.ult.slice(-2).find(j=>Math.abs(j-i)===1);
+  const x={mm:C.mm,tamOk:C.mm===C.est.mapa[z],pouca:C.dip.nivel<.35,muita:C.dip.nivel>.65,colaRuim:C.dip.ruim,perto:dist<.5,longe:dist>1.3,
+    semPad:!C.pad,prepRuim:C.oleo||C.maq.size>0||C.lavado.size<7||C.molhado||!C.primer.has(z),bebe:C.bebes.has(i)};
+  C.ext[i]=x;C.cura.clear();C.escova.clear();
+  if(viz!=null||x.muita){const j=viz!=null?viz:(C.ext[i-1]?i-1:C.ext[i+1]?i+1:null);if(j!=null&&C.ext[j]&&![...C.stick].some(s=>s.split('-').map(Number).some(k=>k===i||k===j)))C.stick.add(Math.min(i,j)+'-'+Math.max(i,j))}
+  C.ult.push(i);C.sel=null;C.dip=null;$('#nv').style.width='0';desenhar();
+  const falt=[...Array(N).keys()].filter(k=>!C.bebes.has(k)&&!C.fora.has(k)&&!C.ext[k]&&!C.velho[k]).length;
+  msg(`Fio colado. Faltam ${falt}.`+(C.cola.usos>=GOTA?' A gota engrossou: pingue outra.':''),C.cola.usos>=GOTA?'warn':'')}
+function loop(){const t=(performance.now()-t0)/1000;
+  if(hold==='agit'){C.agit=Math.min(1,C.agit+1/140);const a=$('#ag');if(a)a.style.width=C.agit*100+'%'}
+  if(hold==='dip'){C.nivel=Math.min(1,C.nivel+1/90);const n=$('#nv');if(n)n.style.width=C.nivel*100+'%'}
+  if(C){C.pos=(Math.sin(t*2.6)+1)/2;const m=$('#mk');if(m)m.style.left=C.pos*100+'%'}
+  raf=requestAnimationFrame(loop)}
+
+/* ===== telas ===== */
+function cabecalho(){$('#pedido').innerHTML=C?`<b>${C.nome}</b> · ${C.cena==='manut'?'Manutenção':'Aplicação'} · ${C.est.nome}`:'';$('#caixa').textContent='Caixa: R$ '+caixa}
+function telaChegada(){cabecalho();ctx.innerHTML='';msg('Olhe bem para o olho da cliente antes de começar.');
+  right.innerHTML=`<div class="eye">Cliente ${atend+1} do dia</div><h2>${C.nome} <em>chegou</em></h2><div class="fala">“${C.fala}”</div>
+   <p>Não há roteiro: a bancada tem tudo, inclusive o que você não deve usar. Escolha a ferramenta, use no olho e entregue o espelho quando terminar.</p>
+   <div class="row"><button class="pri" id="deitar">Deitar a cliente e começar</button><button id="rem">Remarcar a cliente</button></div>`;
+  $('#deitar').onclick=()=>{C.aberto=false;C.fase='atendimento';bancada();desenhar();msg('Cliente deitada, olhos fechados. Escolha uma ferramenta.')};
+  $('#rem').onclick=()=>fim(true)}
+function fim(remarcou){C.fase='fim';C.padNoEspelho=C.pad&&!remarcou;C.sel=null;ctx.innerHTML='';msg('');
+  const q=[];let estrelas=5,valor=0,frase,base=C.cena==='manut'?PRECO.manut:PRECO.novo+(C.cena==='troca'?PRECO.remocao:0);
+  const mexeu=novos().length||C.cola||C.primer.size||C.lavado.size||Object.keys(C.gel).length;
+  if(C.cena==='irritado'){
+    if(remarcou&&!mexeu){frase='Poxa, eu queria tanto… mas obrigada pelo cuidado. Vou ao oftalmo e volto com você.';estrelas=5;q.push(['','Olho vermelho e coçando pode ser conjuntivite. Remarcar foi a decisão certa.'])}
+    else{C.piorou=true;estrelas=1;frase='Meu olho piorou muito depois que saí daí! Tive que ir ao pronto-socorro.';q.push(['Atendeu com o olho irritado','Olho vermelho, coçando ou com secreção não recebe produto nenhum. Remarque e oriente a procurar um médico.'])}
+  } else if(remarcou){estrelas=2;frase='Ué, mas eu não tinha nada… Perdi a viagem.';q.push(['Remarcou sem motivo','Essa cliente não tinha contraindicação. Você perdeu o atendimento.'])}
+  else{const nv=novos(),alvo=[...Array(N).keys()].filter(k=>!C.bebes.has(k)),cob=alvo.filter(k=>C.ext[k]).length/alvo.length,fr=f=>nv.length?nv.filter(f).length/nv.length:0;
+    const add=(peso,t,d)=>{estrelas-=peso;q.push([t,d])};
+    if(C.dano)add(3,'“Você arrancou meus cílios! Doeu muito.”','Extensão antiga só sai com removedor em gel e microbrush, nunca puxando com a pinça.');
+    if(Object.keys(C.velho).length)add(2,'“As extensões velhas e tortas continuam aqui.”','Passe o removedor, espere agir e retire com o microbrush antes de aplicar.');
+    if(cob<.6)add(2,'“Ficou todo falhado, cheio de buraco.”','Preencha todos os fios naturais adultos.');else if(cob<.9)add(1,'“Ficou com umas falhas.”','Confira se não sobrou fio natural sem extensão.');
+    if(fr(x=>x.prepRuim)>.3)add(2,'“Em três dias já tinha caído quase tudo.”','Antes de colar: sem maquiagem, lavado com shampoo, seco e com primer. Óleo impede a cola de fixar.');
+    if(nv.some(x=>x.semPad))add(2,'“Meus cílios de baixo colaram nos de cima.”','Pad de gel e fita protegem os cílios inferiores. Coloque antes de colar.');
+    if(fr(x=>!x.tamOk)>.25)add(2,'“Não ficou o efeito que eu pedi.”','Siga o mapa de tamanhos do efeito, zona por zona. Ele está na ficha e no pad.');
+    if(nv.filter(x=>x.perto).length>=2)add(2,'“Está pinicando e ardendo, a cola pegou na pele.”','A extensão fica entre 0,5 e 1 mm da pálpebra, sem encostar.');
+    if(nv.filter(x=>x.longe||x.pouca).length>=3)add(1,'“Os fios estão tortos e soltando.”','Pouca cola ou fio colado longe da raiz não segura.');
+    if(C.stick.size)add(C.stick.size>2?2:1,'“Está repuxando, tem fios grudados.”','Revise com a pinça e separe os fios colados. Alterne as áreas e não exagere na cola.');
+    if(nv.filter(x=>x.colaRuim).length>=3)add(1,'“A cola ficou esbranquiçada e soltou.”','Agite o frasco antes de pingar e troque a gota quando engrossar.');
+    if(nv.some(x=>x.bebe))add(1,'“Meus fios novinhos quebraram com o peso.”','Fio bebê, curto e fino, não recebe extensão.');
+    if(C.quente)add(2,'“Aquele ar quente queimou meu olho.”','Use o ventilador frio, nunca o secador quente.');
+    if(nv.length&&C.cura.size<7)add(1,'“Ardeu muito quando abri o olho.”','Ventile os fios para curar a cola antes de abrir os olhos.');
+    if(C.padNoEspelho)add(1,'“Você me deu o espelho com o pad no olho?”','Retire pads e fita antes de entregar o espelho.');
+    if(nv.length&&C.escova.size<7)add(.5,'“Nem pentearam, saí toda descabelada.”','Finalize com a escovinha.');
+    estrelas=Math.max(1,Math.round(estrelas));
+    frase=estrelas===5?'Amei! Ficou perfeito. Vou indicar para todas as minhas amigas.':estrelas===4?'Gostei bastante, ficou bonito.':estrelas===3?'Ficou mais ou menos… esperava mais.':estrelas===2?'Não gostei. Não vou pagar o valor cheio.':'Que horror! Não vou pagar por isso.';
+    valor=estrelas>=4?base:estrelas===3?Math.round(base*.7):estrelas===2?Math.round(base*.3):0;if(estrelas===5)valor+=PRECO.gorjeta}
+  caixa+=valor;atend++;C.aberto=true;cabecalho();desenhar();
+  let rec='';try{const v=+localStorage.getItem('lash-studio-caixa')||0;if(caixa>v)localStorage.setItem('lash-studio-caixa',caixa);rec=`Recorde de caixa: R$ ${Math.max(v,caixa)}`}catch(e){}
+  right.innerHTML=`<div class="eye">${C.nome} avaliou</div><div class="stars" aria-label="${estrelas} de 5 estrelas">${'★'.repeat(estrelas)}${'☆'.repeat(5-estrelas)}</div>
+   <div class="fala">“${frase}”</div><div class="row" style="align-items:baseline"><div class="big">R$ ${valor}</div><p>${remarcou?'atendimento remarcado':valor>base?'com gorjeta':valor===0?'ela não pagou':valor<base?`de R$ ${base}`:'valor cheio'}</p></div>
+   ${q.length?`<ul>${q.map(([t,d])=>`<li>${t?`<b>${t}</b> `:''}${d}</li>`).join('')}</ul>`:'<p>Nenhuma reclamação. Atendimento completo.</p>'}
+   <button class="pri" id="prox">Próxima cliente</button><p style="font-size:12px">${rec}</p>`;
+  right.scrollTop=0;$('#prox').onclick=novaCliente}
+novaCliente();loop();
+</script>
+</body>
+</html>
