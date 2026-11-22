@@ -6,50 +6,54 @@
 <title>Lash Studio</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Jost:wght@400;500&display=swap">
 <style>
-/* layout: celular deitado. Esquerda = o olho da cliente e o que a ferramenta ativa pede; direita = bancada de ferramentas. */
+/* layout: celular deitado, o olho ocupa a tela inteira. Controles flutuam por cima; as ferramentas ficam numa gaveta. */
 :root{
   color-scheme:dark;
-  --bg:#14100E; --surface:#221A16; --raise:#2E241F; --line:#57483F;
+  --bg:#14100E; --surface:rgba(20,16,14,.9); --raise:#2E241F; --line:#57483F;
   --text:#F6F0EA; --muted:#D2C4B9; --accent:#E7CABF; --good:#A6D8AE; --bad:#F2A892; --warn:#EBCB8B;
   --display:'Cormorant Garamond',Georgia,serif; --body:'Jost',system-ui,sans-serif;
 }
 *{box-sizing:border-box;margin:0}
 html,body{height:100%}
-body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:14px;line-height:1.4;display:flex;flex-direction:column;overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none}
-header{display:flex;align-items:center;gap:12px;padding:6px 16px;border-bottom:1px solid var(--line);flex:none}
-header h1{font-family:var(--display);font-weight:600;font-size:20px;white-space:nowrap}
-#pedido{flex:1;min-width:0;color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#pedido b{color:var(--text);font-weight:500}
-#caixa{font-variant-numeric:tabular-nums;font-weight:500;white-space:nowrap;color:var(--accent)}
-#tip{display:none;background:var(--raise);color:var(--warn);padding:5px 16px;font-size:13px;flex:none}
-main{flex:1;min-height:0;display:flex;gap:10px;padding:10px 16px}
-#left{flex:1.35;min-width:0;display:flex;flex-direction:column;gap:6px}
-#stage{flex:1;min-height:0;background:var(--surface);border-radius:14px;overflow:hidden}
-#stage svg{width:100%;height:100%;display:block;touch-action:none}
-#msg{min-height:20px;font-size:13.5px;color:var(--muted)}
+body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:14px;line-height:1.4;overflow:hidden;position:relative;-webkit-tap-highlight-color:transparent;user-select:none}
+#svg{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.hud{position:absolute;z-index:2}
+#top{top:8px;left:12px;right:12px;display:flex;gap:8px;align-items:center;pointer-events:none}
+#top>*{pointer-events:auto}
+.pill{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#pedido{flex:0 1 auto;min-width:0}#pedido b{font-weight:500}
+#caixa{margin-left:auto;color:var(--accent);font-weight:500;font-variant-numeric:tabular-nums}
+#msg{left:50%;transform:translateX(-50%);bottom:64px;max-width:70%;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px 12px;font-size:13.5px;text-align:center}
+#msg:empty{display:none}
 #msg.good{color:var(--good)}#msg.bad{color:var(--bad)}#msg.warn{color:var(--warn)}
-#ctx{display:flex;flex-direction:column;gap:5px;flex:none}
-#right{flex:1;min-width:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
-#tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
-@media (orientation:portrait){#tip{display:block}main{flex-direction:column}#left{flex:1.2}}
-button{font:inherit;color:var(--text);background:var(--raise);border:1px solid var(--line);border-radius:9px;padding:6px 8px;min-height:40px;cursor:pointer;text-align:center;line-height:1.15}
+#bottom{left:12px;right:12px;bottom:10px;display:flex;gap:8px;align-items:flex-end;pointer-events:none}
+#bottom>*{pointer-events:auto}
+#ctx{flex:1;display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+button{font:inherit;color:var(--text);background:var(--raise);border:1px solid var(--line);border-radius:10px;padding:8px 12px;min-height:44px;cursor:pointer;text-align:center;line-height:1.15}
 button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 button.on{border-color:var(--accent);background:#4A3830;color:var(--accent)}
 button.pri{background:var(--accent);color:#14100E;border-color:var(--accent);font-weight:500}
-#tools button{font-size:12.5px}
-.row{display:flex;gap:6px;flex-wrap:wrap}
-.row>button{flex:1}
-.chip{min-width:36px;padding:4px 2px;min-height:34px;font-variant-numeric:tabular-nums}
-.bar{height:13px;border-radius:7px;background:var(--raise);border:1px solid var(--line);position:relative;overflow:hidden}
-.bar .fill{position:absolute;inset:0 auto 0 0;background:var(--accent);width:0;opacity:.85}
-.bar .zone{position:absolute;top:0;bottom:0;background:rgba(166,216,174,.35);border-left:1px solid var(--good);border-right:1px solid var(--good)}
-.bar .mark{position:absolute;top:-2px;bottom:-2px;width:4px;margin-left:-2px;background:var(--text);border-radius:2px}
-.lab{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
-h2{font-family:var(--display);font-weight:500;font-size:25px;line-height:1.08;text-wrap:balance}
+#abrir{min-width:150px;text-align:left}
+#abrir small{display:block;color:#5A4338;font-size:11px}
+.chip{min-width:44px;padding:6px 4px;font-variant-numeric:tabular-nums}
+#jade{width:64px;height:64px;border-radius:50%;padding:0;border:3px solid #5E7F6A;background:conic-gradient(var(--accent) calc(var(--n,0)*1turn),#7FA38C 0);position:relative;font-size:10px;color:#14100E}
+#jade::after{content:'';position:absolute;inset:0;margin:auto;width:var(--d,0px);height:var(--d,0px);border-radius:50%;background:#0B0807}
+#agitar{background:linear-gradient(90deg,#4A3830 calc(var(--a,0)*100%),var(--raise) 0)}
+#drawer{inset:0;z-index:5;background:rgba(20,16,14,.94);padding:12px 16px;display:none;flex-direction:column;gap:10px}
+#drawer.open{display:flex}
+#drawer .head{display:flex;justify-content:space-between;align-items:center}
+#tools{flex:1;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));grid-auto-rows:1fr;gap:8px}
+#tools button{font-size:13px}
+#card{top:0;right:0;bottom:0;width:min(46%,420px);z-index:4;background:var(--surface);border-left:1px solid var(--line);padding:14px 16px;overflow-y:auto;display:none;flex-direction:column;gap:9px}
+#card.open{display:flex}
+#gira{inset:0;z-index:9;background:var(--bg);display:none;align-items:center;justify-content:center;text-align:center;padding:24px;font-size:18px}
+@media (orientation:portrait){#gira{display:flex}}
+.row{display:flex;gap:6px;flex-wrap:wrap}.row>button{flex:1}
+h2{font-family:var(--display);font-weight:500;font-size:26px;line-height:1.08;text-wrap:balance}
 h2 em{color:var(--accent)}
 .eye{font-size:11px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
 p{color:var(--muted)}p b{color:var(--text);font-weight:500}
-.fala{background:var(--surface);border-radius:12px;padding:10px 12px;font-size:15px;color:var(--text)}
+.fala{background:var(--raise);border-radius:12px;padding:10px 12px;font-size:15px;color:var(--text)}
 .stars{font-size:22px;letter-spacing:3px;color:var(--warn)}
 .big{font-family:var(--display);font-size:44px;font-weight:600;line-height:1;color:var(--accent)}
 ul{padding-left:18px;color:var(--muted);font-size:13.5px;display:flex;flex-direction:column;gap:4px}
@@ -57,12 +61,13 @@ ul b{color:var(--bad);font-weight:500}
 </style>
 </head>
 <body>
-<header><h1>Lash Studio</h1><div id="pedido"></div><div id="caixa">Caixa: R$ 0</div></header>
-<div id="tip">Vire o celular de lado para ter mais espaço.</div>
-<main>
-  <div id="left"><div id="stage"><svg id="svg" viewBox="0 0 400 200" role="img" aria-label="Olho da cliente"></svg></div><div id="msg" aria-live="polite"></div><div id="ctx"></div></div>
-  <div id="right"></div>
-</main>
+<svg id="svg" viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Olho da cliente"></svg>
+<div class="hud" id="top"><div class="pill" id="pedido"></div><button id="cheia" style="min-height:34px;padding:4px 10px;border-radius:999px;font-size:12px">Tela cheia</button><div class="pill" id="caixa">Caixa: R$ 0</div></div>
+<div class="hud" id="msg" aria-live="polite"></div>
+<div class="hud" id="bottom"><button class="pri" id="abrir">Ferramentas<small id="atual">nenhuma na mão</small></button><div id="ctx"></div><button id="jade" aria-label="Pedra de jade: segure para molhar o fio na cola"></button></div>
+<div class="hud" id="drawer"><div class="head"><div class="eye">Bancada: toque para pegar</div><button id="fechar" style="min-height:36px">Fechar</button></div><div id="tools"></div></div>
+<div class="hud" id="card"></div>
+<div class="hud" id="gira">Vire o celular de lado para jogar.</div>
 <script>
 /* ===== CONFIGURAÇÃO ===== */
 const ESTILOS=[
@@ -87,11 +92,11 @@ const FERR=[['ficha','Ficha da cliente'],['remarcar','Remarcar'],['demaq','Demaq
 const N=18, GOTA=8;
 
 /* ===== estado ===== */
-const $=q=>document.querySelector(q), svg=$('#svg'), ctx=$('#ctx'), right=$('#right');
+const $=q=>document.querySelector(q), svg=$('#svg'), ctx=$('#ctx'), right=$('#card');
 let C, caixa=0, atend=0, tool=null, raf, hold=null, t0=performance.now();
 const rnd=a=>a[Math.floor(Math.random()*a.length)];
 const zonaDe=i=>Math.min(6,Math.floor((i+.5)/N*7));
-function msg(t,k=''){const m=$('#msg');m.textContent=t;m.className=k}
+function msg(t,k=''){const m=$('#msg');m.textContent=t;m.className='hud '+k}
 function novaCliente(){
   const est=rnd(ESTILOS), cena=rnd(CENAS), pele=rnd(PELES), bebes=new Set();
   while(bebes.size<2) bebes.add(2+Math.floor(Math.random()*(N-4)));
@@ -121,7 +126,9 @@ function fios(g_,sc){let h='';const e=C.est;
       const par=[...C.stick].find(p=>p.split('-').map(Number).includes(i));
       if(par){const [a,bb]=par.split('-').map(Number),ga=g_(a),gb=g_(bb),la=(C.ext[a]?.mm||10)*3*sc,tx=(ga.x+ga.dx*la+gb.x+gb.dx*la)/2,ty=(ga.y+ga.dy*la+gb.y+gb.dy*la)/2;d=`M${g.x} ${g.y} Q${(g.x+tx)/2} ${(g.y+ty)/2+3} ${tx} ${ty}`}
       h+=`<path d="${d}" stroke="${e.cor}" stroke-width="2" fill="none" stroke-linecap="round"/>`}
-    if(C.sel===i&&!C.aberto)h+=`<circle cx="${g.x+g.dx*8}" cy="${g.y+g.dy*8}" r="9" fill="none" stroke="#fff" stroke-width="1.5"/><path d="M${g.x-8} ${g.y-24} L${g.x-2} ${g.y+3} M${g.x+8} ${g.y-24} L${g.x+2} ${g.y+3}" stroke="#C9CED3" stroke-width="2" stroke-linecap="round"/>`}
+    if(C.sel===i&&!C.aberto){const px=-g.dy*2.6,py=g.dx*2.6;
+      h+=`<path d="M${g.x+g.dx*2.5+px} ${g.y+g.dy*2.5+py} L${g.x+g.dx*7.5+px} ${g.y+g.dy*7.5+py}" stroke="#35C46A" stroke-width="2.4" stroke-linecap="round"/>`;
+      h+=`<path d="M${g.x-7} ${g.y-20} L${g.x-2} ${g.y+2} M${g.x+7} ${g.y-20} L${g.x+2} ${g.y+2}" stroke="#C9CED3" stroke-width="1.6" stroke-linecap="round"/>`}}
   return h}
 function desenhar(){const [pele,sombra]=C.pele;let h=`<rect width="400" height="200" fill="${pele}"/>`;
   if(C.aberto){const verm=C.cena==='irritado'||C.piorou;
@@ -143,10 +150,14 @@ function desenhar(){const [pele,sombra]=C.pele;let h=`<rect width="400" height="
       if(C.gel[z])h+=`<ellipse cx="${x}" cy="${y+10}" rx="22" ry="8" fill="#E88BB0" opacity=".55"/>`;
       if(C.molhado&&C.lavado.has(z)&&!C.seco.has(z))h+=`<circle cx="${x-8}" cy="${y+14}" r="2.5" fill="#9FD3F0"/><circle cx="${x+9}" cy="${y+9}" r="2" fill="#9FD3F0"/><circle cx="${x}" cy="${y+20}" r="1.8" fill="#9FD3F0"/>`}
     h+=`<path d="${linhaF(0)}" fill="none" stroke="#4A382E" stroke-width="2"/>`+fios(gF,1);
-    h+=`<circle cx="372" cy="176" r="18" fill="#7FA38C" stroke="#5E7F6A" stroke-width="2"/>`+(C.cola?`<circle cx="372" cy="176" r="${C.cola.usos>=GOTA?7:5}" fill="${C.cola.usos>=GOTA?'#555':'#0B0807'}"/>`:'')+`<text x="372" y="154" text-anchor="middle" font-size="8" font-family="Jost,sans-serif" fill="#3A2A22">jade</text>`;
   }
-  svg.innerHTML=h}
-function pt(ev){const r=svg.getBoundingClientRect(),s=Math.min(r.width/400,r.height/200),ox=(r.width-400*s)/2,oy=(r.height-200*s)/2;return{x:(ev.clientX-r.left-ox)/s,y:(ev.clientY-r.top-oy)/s}}
+  svg.innerHTML=h;
+  let vb='0 0 400 200';
+  if(!C.aberto&&C.sel!=null&&tool==='aplicar'){const g=gF(C.sel);vb=`${(g.x+g.dx*9-80).toFixed(0)} ${(g.y+g.dy*9-40).toFixed(0)} 160 80`}
+  svg.setAttribute('viewBox',vb);
+  const cartao=$('#card').classList.contains('open');svg.setAttribute('preserveAspectRatio',cartao?'xMidYMid meet':'xMidYMid slice');svg.style.width=cartao?'54%':'100%';document.body.style.background=C.pele[0];
+  const j=$('#jade');j.style.setProperty('--d',C.cola?(C.cola.usos>=GOTA?'30px':'18px'):'0px');j.style.display=C.fase==='atendimento'?'':'none'}
+function pt(ev){const p=new DOMPoint(ev.clientX,ev.clientY).matrixTransform(svg.getScreenCTM().inverse());return{x:p.x,y:p.y}}
 const zonaPt=p=>Math.max(0,Math.min(6,Math.floor((p.x-40)/320*7)));
 function perto(p){let b=null,bd=20;for(let i=0;i<N;i++){const g=gF(i),d=Math.hypot(p.x-(g.x+g.dx*14),p.y-(g.y+g.dy*14));if(d<bd){bd=d;b=i}}return b}
 
@@ -169,65 +180,69 @@ function usar(p,toque){ if(C.aberto||C.fase!=='atendimento')return; const z=zona
      if(par){C.stick.delete(par);msg('Fios separados.','good')}
      else if(C.velho[i]){delete C.velho[i];C.fora.add(i);C.dano++;msg('Você puxou a extensão sem removedor e arrancou o fio natural junto.','bad')}
      else msg('Esses fios estão soltos.'); break}
-   case 'aplicar': if(!toque)break;{const i=perto(p);if(i==null)break;
+   case 'aplicar': if(!toque)break;{
+     if(C.sel!=null&&C.dip){const g=gF(C.sel),ax=(p.x-g.x)*g.dx+(p.y-g.y)*g.dy,lat=Math.abs(-(p.x-g.x)*g.dy+(p.y-g.y)*g.dx);
+       if(lat<7&&ax>-4&&ax<24)return colar(ax); return msg('Toque no fio isolado, na marca verde, para colar.','warn')}
+     const i=perto(p);if(i==null){C.sel=null;break}
      if(C.fora.has(i))return msg('Não há fio natural aqui.','warn'); if(C.ext[i])return msg('Esse fio já tem extensão.','warn'); if(C.velho[i])return msg('Tem uma extensão antiga nesse fio. Remova antes.','warn');
-     C.sel=i;C.dip=null;$('#nv')&&($('#nv').style.width='0');msg(`Fio isolado na zona ${zonaDe(i)+1} (${C.est.mapa[zonaDe(i)]} mm no mapa).`); break}
+     C.sel=i;C.dip=null;msg(`Fio isolado, zona ${zonaDe(i)+1}: ${C.est.mapa[zonaDe(i)]} mm no mapa. Segure na pedra de jade para molhar o fio.`); break}
   } desenhar()}
 svg.addEventListener('pointerdown',ev=>{svg.setPointerCapture(ev.pointerId);usar(pt(ev),true)});
 svg.addEventListener('pointermove',ev=>{if(ev.buttons)usar(pt(ev),false)});
 const novos=()=>Object.values(C.ext).filter(x=>!x.antigo);
 
 /* ===== bancada ===== */
-function bancada(){right.innerHTML=`<div id="tools">${FERR.map(([k,t])=>`<button data-k="${k}" class="${tool===k?'on':''}">${t}</button>`).join('')}</div>`;
-  right.querySelectorAll('button').forEach(b=>b.onclick=()=>pegar(b.dataset.k))}
-function pegar(k){tool=k;C.sel=null;ctx.innerHTML='';
+const NOME=Object.fromEntries(FERR);
+function bancada(){$('#tools').innerHTML=FERR.map(([k,t])=>`<button data-k="${k}" class="${tool===k?'on':''}">${t}</button>`).join('');
+  $('#tools').querySelectorAll('button').forEach(b=>b.onclick=()=>{$('#drawer').classList.remove('open');pegar(b.dataset.k)});
+  $('#atual').textContent=tool?'na mão: '+NOME[tool]:'nenhuma na mão'}
+$('#abrir').onclick=()=>{if(C.fase==='atendimento'){bancada();$('#drawer').classList.add('open')}};
+$('#fechar').onclick=()=>$('#drawer').classList.remove('open');
+$('#cheia').onclick=()=>{const d=document.documentElement;(document.fullscreenElement?document.exitFullscreen():d.requestFullscreen()).then(()=>screen.orientation&&screen.orientation.lock&&screen.orientation.lock('landscape')).catch(()=>{})};
+function pegar(k){tool=k;C.sel=null;C.dip=null;ctx.innerHTML='';
   if(k==='ficha')msg(`${C.nome} pediu ${C.est.nome}. Mapa do canto interno ao externo: ${C.est.mapa.join(' · ')} mm.`);
   else if(k==='remarcar'){return fim(true)}
   else if(k==='pad'){C.pad=true;msg('Pad de gel sobre os cílios inferiores.','good')}
   else if(k==='fita'){if(!C.pad)msg('Coloque o pad antes da fita.','warn');else{C.fita=true;msg('Fita prendendo os fios que escaparam.','good')}}
   else if(k==='tirarpad'){C.pad=C.fita=false;msg('Pads e fita retirados com delicadeza.','good')}
   else if(k==='espelho'){return fim(false)}
-  else if(k==='cola'){ctx.innerHTML=`<div class="bar"><div class="fill" id="ag" style="width:${C.agit*100}%"></div></div><div class="row"><button id="agitar">Segurar: agitar o frasco</button><button id="pingar">Pingar a gota na pedra</button></div>`;
+  else if(k==='cola'){ctx.innerHTML=`<button id="agitar">Segure para agitar o frasco</button><button id="pingar">Pingar a gota na pedra</button>`;
     const a=$('#agitar');a.onpointerdown=()=>hold='agit';a.onpointerup=a.onpointerleave=a.onpointercancel=()=>hold=null;
-    $('#pingar').onclick=()=>{C.cola={agitada:C.agit>=1,usos:0};C.agit=0;$('#ag').style.width='0';desenhar();msg(C.cola.agitada?'Gota nova na pedra de jade.':'Gota na pedra, mas o frasco não foi bem agitado.',C.cola.agitada?'good':'warn')};
+    $('#pingar').onclick=()=>{C.cola={agitada:C.agit>=1,usos:0};C.agit=0;a.style.setProperty('--a',0);desenhar();msg(C.cola.agitada?'Gota nova na pedra de jade.':'Gota na pedra, mas o frasco não foi bem agitado.',C.cola.agitada?'good':'warn')};
     msg('Agite bem o frasco antes de pingar.')}
   else if(k==='aplicar'){const tam=[...new Set(C.est.mapa)].sort((a,b)=>a-b);
-    ctx.innerHTML=`<div class="row" style="flex-wrap:nowrap">${tam.map(m=>`<button class="chip ${C.mm===m?'on':''}" data-m="${m}">${m}</button>`).join('')}</div>
-     <div><div class="lab"><span>Cola no fio</span><span>Distância da pálpebra: ideal 0,5 a 1 mm</span></div><div class="row" style="flex-wrap:nowrap;align-items:center"><div class="bar" style="flex:1"><div class="zone" style="left:35%;width:30%"></div><div class="fill" id="nv"></div></div><div class="bar" style="flex:1"><div class="zone" style="left:16.6%;width:16.7%"></div><div class="mark" id="mk"></div></div></div></div>
-     <div class="row"><button id="molhar">Segurar: molhar na cola</button><button class="pri" id="colar">Colar</button></div>`;
+    ctx.innerHTML=tam.map(m=>`<button class="chip ${C.mm===m?'on':''}" data-m="${m}">${m} mm</button>`).join('');
     ctx.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{C.mm=+b.dataset.m;ctx.querySelectorAll('[data-m]').forEach(x=>x.classList.toggle('on',x===b))});
-    const m=$('#molhar');
-    m.onpointerdown=()=>{if(!C.cola)return msg('Não há gota de cola na pedra.','warn');if(C.sel==null)return msg('Isole um fio natural: toque nele.','warn');if(C.mm==null)return msg('Escolha o tamanho do fio.','warn');C.nivel=0;hold='dip'};
-    m.onpointerup=m.onpointerleave=m.onpointercancel=()=>{if(hold!=='dip')return;hold=null;C.dip={nivel:C.nivel,ruim:C.cola.usos>=GOTA||!C.cola.agitada};C.cola.usos++;desenhar();
-      msg(C.nivel<.35?'Pouca cola no fio.':C.nivel>.65?'Cola demais no fio.':'Boa quantidade. Agora cole.',C.nivel<.35||C.nivel>.65?'warn':'good')};
-    $('#colar').onclick=colar;
-    msg('Toque num fio natural para isolar. Depois escolha o tamanho, molhe e cole.')}
+    msg('Toque num fio natural para isolar. Escolha o tamanho, molhe na pedra de jade e toque no fio para colar.')}
   else msg({demaq:'Passe o demaquilante sobre os cílios.',oleo:'Passe o óleo sobre os cílios.',shampoo:'Passe o pincel com shampoo em todo o olho.',vento:'Passe o ventilador sobre os fios.',quente:'Passe o secador sobre os fios.',removedor:'Passe o removedor sobre as extensões que vão sair.',micro:'Passe o microbrush para retirar o que o removedor soltou.',primer:'Passe o primer nos fios naturais.',escova:'Penteie os fios.',separar:'Toque no fio que você quer soltar.'}[k]||'');
   bancada();desenhar()}
-function colar(){if(C.sel==null)return msg('Isole um fio natural: toque nele.','warn');if(!C.dip)return msg('Molhe a base da extensão na cola antes.','warn');
-  const i=C.sel,z=zonaDe(i),dist=C.pos*3,viz=C.ult.slice(-2).find(j=>Math.abs(j-i)===1);
-  const x={mm:C.mm,tamOk:C.mm===C.est.mapa[z],pouca:C.dip.nivel<.35,muita:C.dip.nivel>.65,colaRuim:C.dip.ruim,perto:dist<.5,longe:dist>1.3,
+const jade=$('#jade');let tDip=0;
+jade.onpointerdown=()=>{if(tool!=='aplicar')return msg('Pegue as pinças e os fios na bancada para colar.','warn');if(!C.cola)return msg('Não há gota de cola na pedra. Prepare o adesivo.','warn');if(C.sel==null)return msg('Isole um fio natural antes: toque nele.','warn');if(C.mm==null)return msg('Escolha o tamanho do fio.','warn');tDip=performance.now();hold='dip'};
+jade.onpointerup=jade.onpointerleave=jade.onpointercancel=()=>{if(hold!=='dip')return;hold=null;const n=Math.min(1,(performance.now()-tDip)/1500);jade.style.setProperty('--n',0);
+  C.dip={nivel:n,ruim:C.cola.usos>=GOTA||!C.cola.agitada};C.cola.usos++;desenhar();
+  msg(n<.2?'Encostou rápido demais: pouca cola. Agora toque na marca verde do fio.':n>.65?'Ficou tempo demais: cola em excesso. Agora toque na marca verde do fio.':'Boa quantidade de cola. Toque na marca verde do fio para colar.',n<.2||n>.65?'warn':'good')};
+function colar(ax){const i=C.sel,z=zonaDe(i),viz=C.ult.slice(-2).find(j=>Math.abs(j-i)===1);
+  const x={mm:C.mm,tamOk:C.mm===C.est.mapa[z],pouca:C.dip.nivel<.2,muita:C.dip.nivel>.65,colaRuim:C.dip.ruim,perto:ax<2.5,longe:ax>7.5,
     semPad:!C.pad,prepRuim:C.oleo||C.maq.size>0||C.lavado.size<7||C.molhado||!C.primer.has(z),bebe:C.bebes.has(i)};
   C.ext[i]=x;C.cura.clear();C.escova.clear();
   if(viz!=null||x.muita){const j=viz!=null?viz:(C.ext[i-1]?i-1:C.ext[i+1]?i+1:null);if(j!=null&&C.ext[j]&&![...C.stick].some(s=>s.split('-').map(Number).some(k=>k===i||k===j)))C.stick.add(Math.min(i,j)+'-'+Math.max(i,j))}
-  C.ult.push(i);C.sel=null;C.dip=null;$('#nv').style.width='0';desenhar();
+  C.ult.push(i);C.sel=null;C.dip=null;desenhar();
   const falt=[...Array(N).keys()].filter(k=>!C.bebes.has(k)&&!C.fora.has(k)&&!C.ext[k]&&!C.velho[k]).length;
-  msg(`Fio colado. Faltam ${falt}.`+(C.cola.usos>=GOTA?' A gota engrossou: pingue outra.':''),C.cola.usos>=GOTA?'warn':'')}
-function loop(){const t=(performance.now()-t0)/1000;
-  if(hold==='agit'){C.agit=Math.min(1,C.agit+1/140);const a=$('#ag');if(a)a.style.width=C.agit*100+'%'}
-  if(hold==='dip'){C.nivel=Math.min(1,C.nivel+1/90);const n=$('#nv');if(n)n.style.width=C.nivel*100+'%'}
-  if(C){C.pos=(Math.sin(t*2.6)+1)/2;const m=$('#mk');if(m)m.style.left=C.pos*100+'%'}
+  msg((x.perto?'Colou encostado na pálpebra. ':x.longe?'Colou longe da raiz. ':'Fio colado. ')+`Faltam ${falt}.`+(C.cola.usos>=GOTA?' A gota engrossou: pingue outra.':''),x.perto||x.longe||C.cola.usos>=GOTA?'warn':'good')}
+function loop(){
+  if(hold==='agit'){C.agit=Math.min(1,C.agit+1/140);const a=$('#agitar');if(a){a.style.setProperty('--a',C.agit);if(C.agit>=1)a.textContent='Bem agitado'}}
+  if(hold==='dip')jade.style.setProperty('--n',Math.min(1,(performance.now()-tDip)/1500));
   raf=requestAnimationFrame(loop)}
 
 /* ===== telas ===== */
 function cabecalho(){$('#pedido').innerHTML=C?`<b>${C.nome}</b> · ${C.cena==='manut'?'Manutenção':'Aplicação'} · ${C.est.nome}`:'';$('#caixa').textContent='Caixa: R$ '+caixa}
-function telaChegada(){cabecalho();ctx.innerHTML='';msg('Olhe bem para o olho da cliente antes de começar.');
+function telaChegada(){cabecalho();ctx.innerHTML='';msg('');$('#bottom').style.display='none';right.classList.add('open');
   right.innerHTML=`<div class="eye">Cliente ${atend+1} do dia</div><h2>${C.nome} <em>chegou</em></h2><div class="fala">“${C.fala}”</div>
-   <p>Não há roteiro: a bancada tem tudo, inclusive o que você não deve usar. Escolha a ferramenta, use no olho e entregue o espelho quando terminar.</p>
+   <p>Olhe bem para o olho dela. Não há roteiro: a bancada tem tudo, inclusive o que você não deve usar. Pegue a ferramenta, use no olho e entregue o espelho quando terminar.</p>
    <div class="row"><button class="pri" id="deitar">Deitar a cliente e começar</button><button id="rem">Remarcar a cliente</button></div>`;
-  $('#deitar').onclick=()=>{C.aberto=false;C.fase='atendimento';bancada();desenhar();msg('Cliente deitada, olhos fechados. Escolha uma ferramenta.')};
+  $('#deitar').onclick=()=>{C.aberto=false;C.fase='atendimento';right.classList.remove('open');$('#bottom').style.display='';bancada();desenhar();msg('Cliente deitada, de olhos fechados. Abra as ferramentas.')};
   $('#rem').onclick=()=>fim(true)}
-function fim(remarcou){C.fase='fim';C.padNoEspelho=C.pad&&!remarcou;C.sel=null;ctx.innerHTML='';msg('');
+function fim(remarcou){C.fase='fim';tool=null;$('#bottom').style.display='none';$('#drawer').classList.remove('open');right.classList.add('open');C.padNoEspelho=C.pad&&!remarcou;C.sel=null;ctx.innerHTML='';msg('');
   const q=[];let estrelas=5,valor=0,frase,base=C.cena==='manut'?PRECO.manut:PRECO.novo+(C.cena==='troca'?PRECO.remocao:0);
   const mexeu=novos().length||C.cola||C.primer.size||C.lavado.size||Object.keys(C.gel).length;
   if(C.cena==='irritado'){

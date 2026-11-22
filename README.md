@@ -61,10 +61,11 @@ Um quiz para treinar as decisões do atendimento de extensão de cílios:
 Um simulador do atendimento de extensão de cílios, sem roteiro:
 
 - A cada cliente o olho chega de um jeito, sorteado: **limpo**, **com maquiagem**, **com extensões antigas para tirar**, **para manutenção** ou **irritado** (caso em que o certo é remarcar).
-- A **bancada** tem 18 ferramentas, inclusive as que não devem ser usadas. Você escolhe a ferramenta e usa no olho: demaquilar, lavar, secar, remover, isolar com pad e fita, passar primer, preparar a cola e colar fio a fio no tamanho do mapa.
+- O olho ocupa a **tela inteira** e o botão **Ferramentas** abre a bancada, com 18 itens, inclusive os que não devem ser usados. Você pega a ferramenta e usa no olho: demaquilar, lavar, secar, remover, isolar com pad e fita e passar primer.
+- Para colar, toque no fio natural para isolar (a tela aproxima), segure na **pedra de jade** para molhar a extensão e toque na marca verde do fio.
 - Ao **entregar o espelho**, a cliente avalia de 1 a 5 estrelas: paga o valor cheio com gorjeta se ficou perfeito, paga menos ou reclama dizendo o que deu errado.
 - O **caixa do dia** soma os atendimentos e o recorde fica salvo no aparelho.
-- Feito para o **celular deitado**. Os mapas de cada efeito e os preços ficam nos blocos `ESTILOS` e `PRECO`, no topo do código.
+- Feito para o **celular deitado**, com botão de tela cheia. Os mapas de cada efeito e os preços ficam nos blocos `ESTILOS` e `PRECO`, no topo do código.
 
 ## Como rodar localmente
 
