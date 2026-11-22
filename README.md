@@ -47,12 +47,13 @@ Um jogo para decorar as regras de cada laboratório. Você mesmo cadastra as reg
 
 ### 👁️ Treino de Lash
 
-Um simulador para treinar o atendimento de extensão de cílios, do começo ao fim:
+Um quiz para treinar as decisões do atendimento de extensão de cílios:
 
-- **10 etapas pontuadas:** cliente e efeito, anamnese, higiene, isolamento, mapping, adesivo, aplicação fio a fio, revisão dos fios colados, finalização e resultado.
-- **Aplicação:** isole o fio natural, escolha o tamanho da zona, molhe na cola na quantidade certa e cole entre 0,5 e 1 mm da pálpebra. Fios bebê não recebem extensão e a gota precisa ser trocada.
-- No fim aparece a **nota por etapa** e a lista do que revisar.
-- Feito para o **celular deitado**. Os mapas e as curvaturas de cada efeito ficam no bloco `ESTILOS`, no topo do código.
+- **Atender ou não?** A cliente conta uma situação (conjuntivite, alergia à cola, lentes de contato, gestação e outras) e você decide se atende, atende com um cuidado extra ou não atende hoje.
+- **Produto certo:** qual produto usar em cada momento do procedimento.
+- **Ordem certa:** monte a sequência dos passos.
+- São **15 perguntas sorteadas** por rodada. O jogo só mostra o que está certo ou errado **no fim**, com a explicação de cada resposta.
+- Feito para o **celular deitado**. As perguntas ficam nos blocos `CASOS`, `PRODUTOS` e `ORDENS`, no topo do código.
 
 ## Como rodar localmente
 
